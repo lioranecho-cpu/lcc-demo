@@ -383,7 +383,8 @@ window.fetch = async function(url, options = {}) {
       }))
     },
     fees_30d_sats: 2847,
-    fees_alltime_sats: 4120
+    fees_alltime_sats: 4120,
+    wallet: {confirmed_balance: 1842000, channel_balance: 18420000, btc_price_usd: 64800}
   });
   if (path === '/api/node') return jsonResponse(MOCK_NODE);
   if (path === '/api/wallet') return jsonResponse(MOCK_WALLET);
