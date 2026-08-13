@@ -18,7 +18,10 @@ const MOCK_WALLET = {
   on_chain: { total: 1842000, confirmed: 1842000, unconfirmed: 0 },
   channel: { local: 18420000, remote: 16580000 },
   total_sats: 20262000,
+  confirmed_balance: 1842000,
+  channel_balance: 18420000,
   btc_price: 64800,
+  btc_price_usd: 64800,
   total_usd: "13129.78"
 };
 
