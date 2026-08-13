@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LCC — Wallet</title>
+  <style>
+    :root {
+      --bg:#0f1117;--surface:#161b27;--surface2:#1c2233;--border:#252d3d;
+      --orange:#f7931a;--orange-dim:#b36a12;--green:#22c55e;--red:#ef4444;
+      --blue:#3b82f6;--text:#f0f0f0;--muted:#888;
+      --font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono','Courier New',monospace;
+      --radius:10px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--bg);color:var(--text);font-family:var(--font);display:flex;min-height:100vh;font-size:14px;}
+    .sidebar{width:220px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;}
+    .sidebar-logo{display:flex;align-items:center;gap:10px;padding:20px 18px;border-bottom:1px solid var(--border);}
+    .sidebar-logo .bolt{font-size:22px;}
+    .logo-text{display:flex;flex-direction:column;line-height:1.2;}
+    .logo-text span:first-child{font-weight:700;font-size:15px;}
+    .logo-text span:last-child{font-size:10px;color:var(--orange);letter-spacing:.08em;text-transform:uppercase;}
+    .nav{flex:1;padding:12px 0;overflow-y:auto;min-height:0;}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:10px 18px;color:var(--muted);cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:13.5px;}
+    .nav-item:hover{color:var(--text);background:var(--surface2);}
+    .nav-item.active{color:var(--orange);border-left-color:var(--orange);background:rgba(247,147,26,.06);}
+    .nav-item .icon{font-size:15px;width:18px;text-align:center;}
+    .nav-section{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);padding:14px 18px 4px;}
+    .sidebar-footer{padding:14px 18px;border-top:1px solid var(--border);}
+    .version-badge{font-size:10px;color:var(--muted);margin-bottom:8px;}
+    .community-badge{font-size:10px;color:var(--muted);text-align:center;padding:0 0 6px;line-height:1.5;}
+    .donate-btn{width:100%;background:rgba(247,147,26,.12);border:1px solid var(--orange-dim);color:var(--orange);padding:8px;border-radius:var(--radius);cursor:pointer;font-size:12px;font-family:var(--font);transition:background .15s;}
+    .donate-btn:hover{background:rgba(247,147,26,.2);}
+    .main{margin-left:220px;flex:1;display:flex;flex-direction:column;}
+    .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+    .topbar-left h1{font-size:16px;font-weight:700;}
+    .topbar-left p{font-size:11px;color:var(--muted);}
+    .topbar-right{display:flex;align-items:center;gap:20px;}
+    .status-pill{display:flex;align-items:center;gap:6px;font-size:12px;}
+    .status-pill.ok{color:var(--green);}
+    .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);}
+    .block-height{font-family:var(--mono);font-size:12px;color:var(--muted);}
+    .block-height span{color:var(--orange);font-weight:600;}
+    .balance-display{text-align:right;}
+    .balance-display .sats{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--orange);}
+    .balance-display .usd{font-size:11px;color:var(--muted);}
+    .content{padding:24px;flex:1;}
+    .page-header{margin-bottom:24px;}
+    .page-header h2{font-size:20px;font-weight:700;}
+    .page-header p{font-size:12px;color:var(--muted);margin-top:2px;}
+
+    /* Balance cards */
+    .balance-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px;}
+    .balance-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;position:relative;overflow:hidden;}
+    .balance-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+    .balance-card.onchain::before{background:var(--orange);}
+    .balance-card.channel::before{background:var(--blue);}
+    .balance-card.total::before{background:var(--green);}
+    .bc-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px;}
+    .bc-value{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--text);margin-bottom:4px;}
+    .bc-usd{font-size:12px;color:var(--muted);}
+    .bc-sub{font-size:11px;color:var(--muted);margin-top:8px;}
+    .bc-icon{position:absolute;top:16px;right:16px;font-size:24px;opacity:0.3;}
+
+    /* Two column layout */
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px;}
+
+    /* Panel */
+    .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+    .panel-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);}
+    .panel-header h3{font-size:13px;font-weight:600;}
+    .panel-body{padding:16px;}
+
+    /* Receive section */
+    .addr-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;font-family:var(--mono);font-size:11px;color:var(--text);word-break:break-all;margin-bottom:12px;line-height:1.6;}
+    .addr-placeholder{color:var(--muted);font-style:italic;}
+    .btn{padding:10px 16px;border-radius:8px;border:none;cursor:pointer;font-family:var(--font);font-size:13px;font-weight:600;transition:all .15s;}
+    .btn-orange{background:var(--orange);color:#000;}
+    .btn-orange:hover{background:#e8851a;}
+    .btn-outline{background:transparent;border:1px solid var(--border);color:var(--muted);}
+    .btn-outline:hover{border-color:var(--orange-dim);color:var(--text);}
+    .btn-row{display:flex;gap:8px;}
+    .copy-feedback{font-size:11px;color:var(--green);margin-top:8px;height:16px;}
+
+    /* QR placeholder */
+    .qr-box{width:120px;height:120px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px;text-align:center;margin:0 auto 12px;}
+
+    /* Send section */
+    .form-group{margin-bottom:14px;}
+    .form-label{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:6px;display:block;}
+    .form-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;transition:border-color .15s;}
+    .form-input:focus{border-color:var(--orange-dim);}
+    .form-input::placeholder{color:var(--muted);}
+
+    /* Transaction table */
+    .tx-table{width:100%;border-collapse:collapse;}
+    .tx-table th{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);font-weight:500;}
+    .tx-table td{padding:12px 14px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.04);font-family:var(--mono);}
+    .tx-table tr:last-child td{border-bottom:none;}
+    .tx-table tr:hover td{background:var(--surface2);}
+    .tx-type{font-family:var(--font);display:flex;align-items:center;gap:8px;}
+    .tx-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+    .tx-dot.received{background:var(--green);}
+    .tx-dot.sent{background:var(--red);}
+    .tx-dot.forwarded{background:var(--blue);}
+    .tx-amount.pos{color:var(--green);}
+    .tx-amount.neg{color:var(--red);}
+    .tx-hash{color:var(--muted);font-size:11px;}
+
+    /* Status bar */
+    .statusbar{background:var(--surface);border-top:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:32px;}
+    .sb-item{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);}
+    .sb-icon{font-size:14px;}
+    .sb-val{color:var(--text);font-family:var(--mono);}
+    .sb-label{font-size:10px;}
+
+    .tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;font-family:var(--font);}
+    .tag.confirmed{background:rgba(34,197,94,.12);color:var(--green);}
+    .tag.pending{background:rgba(247,147,26,.12);color:var(--orange);}
+
+  /* ── DONATE MODAL ── */
+  .cmd-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:10000;align-items:flex-start;justify-content:center;padding-top:120px;}
+  .cmd-overlay.show{display:flex;}
+  .cmd-box{background:#161b27;border:1px solid #f7931a44;border-radius:12px;width:100%;max-width:560px;overflow:hidden;box-shadow:0 24px 64px #000a;}
+  .cmd-input-wrap{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid #252d3d;}
+  .cmd-input-wrap span{font-size:16px;}
+  .cmd-input{flex:1;background:transparent;border:none;outline:none;color:#f0f0f0;font-size:15px;font-family:var(--font);}
+  .cmd-input::placeholder{color:#555;}
+  .cmd-results{max-height:320px;overflow-y:auto;}
+  .cmd-item{display:flex;align-items:center;gap:12px;padding:11px 16px;cursor:pointer;font-size:13px;color:#ccc;transition:background .1s;}
+  .cmd-item:hover,.cmd-item.active{background:rgba(247,147,26,.08);color:#f7931a;}
+  .cmd-item .cmd-icon{font-size:15px;width:20px;text-align:center;}
+  .cmd-item .cmd-label{flex:1;}
+  .cmd-item .cmd-hint{font-size:11px;color:#555;}
+  .cmd-empty{padding:20px;text-align:center;color:#555;font-size:13px;}
+  .donate-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;align-items:center;justify-content:center;}
+  .donate-modal-overlay.show{display:flex;}
+  .donate-modal{background:#161b27;border:1px solid #252d3d;border-radius:16px;padding:28px;max-width:320px;width:90%;text-align:center;position:relative;}
+  .donate-modal h3{font-size:16px;font-weight:700;color:#f0f0f0;margin-bottom:4px;}
+  .donate-modal p{font-size:12px;color:#888;margin-bottom:20px;}
+  .donate-qr{width:200px;height:200px;margin:0 auto 16px;border-radius:8px;background:#fff;padding:8px;}
+  .donate-qr img{width:100%;height:100%;}
+  .donate-address{background:#0f1117;border:1px solid #252d3d;border-radius:8px;padding:10px 12px;font-family:'JetBrains Mono','Courier New',monospace;font-size:12px;color:#f7931a;margin-bottom:16px;word-break:break-all;}
+  .donate-copy-btn{width:100%;background:#f7931a;color:#000;border:none;border-radius:8px;padding:10px;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;margin-bottom:10px;}
+  .donate-copy-btn:hover{background:#e8851a;}
+  .donate-close{background:transparent;border:1px solid #252d3d;color:#888;border-radius:8px;padding:8px 16px;font-family:var(--font);font-size:12px;cursor:pointer;width:100%;}
+  .donate-close:hover{border-color:#ef4444;color:#ef4444;}
+  .donate-modal-x{position:absolute;top:12px;right:14px;background:none;border:none;color:#888;font-size:18px;cursor:pointer;line-height:1;}
+  .donate-modal-x:hover{color:#f0f0f0;}
+
+  
+  .sidebar{transition:width .2s ease;}
+  .sidebar.collapsed{width:60px;}
+  .sidebar.collapsed .logo-text,
+  .sidebar.collapsed .nav-section,
+  .sidebar.collapsed .community-badge,
+  .sidebar.collapsed .version-badge,
+  .sidebar.collapsed .donate-btn,
+  .sidebar.collapsed #tier-badge,
+  .sidebar.collapsed .nav-label,
+  .sidebar.collapsed .cmd-hint{display:none;}
+  .sidebar.collapsed [style*="margin-left:auto"]{display:none;}
+  .sidebar.collapsed .nav-item{justify-content:center;padding:10px 0;}
+  .sidebar.collapsed .sidebar-logo{justify-content:center;padding:20px 0;}
+  .sidebar.collapsed .sidebar-footer{padding:8px 0;text-align:center;}
+  .sidebar-toggle{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:4px 8px;border-radius:6px;transition:color .15s;}
+  .sidebar-toggle:hover{color:var(--orange);}
+  .main-content{transition:margin-left .2s ease;}
+  .main-content.expanded{margin-left:60px;}
+  .sidebar.collapsed ~ .main-content{margin-left:60px;}
+
+
+  /* ── TOOLTIPS ── */
+  .tip{position:relative;cursor:help;}
+  .tip::after{
+    content:attr(data-tip);
+    position:absolute;
+    top:calc(100% + 8px);
+    left:0;
+    transform:none;
+    background:#0a0d14;
+    color:#f0f0f0;
+    border:1px solid #252d3d;
+    border-radius:8px;
+    padding:8px 12px;
+    font-size:11px;
+    font-family:'Inter',system-ui,sans-serif;
+    line-height:1.5;
+    width:220px;
+    text-align:center;
+    white-space:normal;
+    pointer-events:none;
+    opacity:0;
+    transition:opacity .15s;
+    z-index:9999;
+    box-shadow:0 4px 20px rgba(0,0,0,.5);
+  }
+  .tip:hover::after{opacity:1;}
+  .tip-right::after{left:auto;right:0;transform:none;}
+  .tip-left::after{left:0;transform:none;}
+</style>
+  <script src="/static/lcc-theme.js?v=3"></script>
+<script src="mock.js"></script>
+<script src="mock.js"></script>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo"><span class="bolt">&#9889;</span><div class="logo-text"><span>Lightning Control</span><span>Center</span></div></div>
+  <div style="text-align:center;padding:6px 0;border-bottom:1px solid var(--border);"><button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">&#9776;</button></div>
+  <nav class="nav">
+        <div class="nav-section">Node</div>
+    <div class="nav-item" onclick="location.href='https://lcc.satslist.shop/dashboard'"><span class="icon">&#127968;</span><span class="nav-label"> Dashboard</span></div>
+    <div class="nav-item" onclick="location.href='https://lcc.satslist.shop/static/channels.html'"><span class="icon">&#9889;</span><span class="nav-label"> Channels</span></div>
+    <div class="nav-item" onclick="location.href='https://lcc.satslist.shop/static/peers.html'"><span class="icon">&#128101;</span><span class="nav-label"> Peers</span></div>
+    <div class="nav-item" onclick="location.href='https://lcc.satslist.shop/static/routing.html'"><span class="icon">&#128256;</span><span class="nav-label"> Routing</span></div>
+    <div class="nav-item" onclick="location.href='https://lcc.satslist.shop/static/wallet.html'"><span class="icon">&#128091;</span><span class="nav-label"> Wallet</span></div>
+    <div class="nav-section">Tools</div>
+    <div class="nav-item" onclick="openCmd()"><span class="icon">&#9211;</span><span class="nav-label"> Palette </span><span style="font-size:10px;color:#555;margin-left:auto;">Ctrl+Space</span></div>
+    <div class="nav-item" onclick="location.href='https://lcc.satslist.shop/static/analytics.html'"><span class="icon">&#128202;</span><span class="nav-label"> Analytics</span></div>
+    <div class="nav-item" onclick="location.href='https://lcc.satslist.shop/static/journal.html'"><span class="icon">&#128221;</span><span class="nav-label"> Node Journal</span></div>
+    <div class="nav-item" onclick="location.href='https://lcc.satslist.shop/static/alerts.html'"><span class="icon">&#128276;</span><span class="nav-label"> Alerts</span></div>
+    <div class="nav-item" onclick="location.href='https://lcc.satslist.shop/static/treasury.html'"><span class="icon">&#128176;</span><span class="nav-label"> Treasury</span></div>
+    <div class="nav-item" onclick="window.open('http://192.168.4.76:8001','LiveStream','width=1000,height=650,menubar=no,toolbar=no,location=no')" style="color:var(--green);"><span class="icon">📡</span><span class="nav-label"> Live Stream</span></div>
+    <div class="nav-item" onclick="location.href='https://lcc.satslist.shop/static/nwc.html'"><span class="icon">⚡</span><span class="nav-label"> NWC <span style='font-size:9px;background:var(--orange-dim);border:1px solid var(--orange);color:var(--orange);padding:1px 5px;border-radius:10px;margin-left:4px;'>PRO</span></span></div>
+    <div class="nav-section">System</div>
+    <div class="nav-item" onclick="location.href='https://lcc.satslist.shop/static/mining.html'"><span class="icon">&#9935;</span><span class="nav-label"> Mining</span></div>
+    <div class="nav-item" onclick="location.href='https://lcc.satslist.shop/static/system.html'"><span class="icon">&#128421;</span><span class="nav-label"> System</span></div>
+    <div class="nav-item" onclick="location.href='https://lcc.satslist.shop/static/integrations.html'"><span class="icon">&#128279;</span><span class="nav-label"> Integrations</span></div>
+    <div class="nav-item" onclick="window.open('https://satslist.shop','_blank')"><span class="icon">&#128279;</span><span class="nav-label"> SatsList</span></div>
+    <div class="nav-item" onclick="location.href='https://lcc.satslist.shop/static/settings.html'"><span class="icon">&#9881;</span><span class="nav-label"> Settings</span></div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="version-badge">LCC v0.1.2</div>
+    <div class="community-badge">Made with &#9889; and &#8383;<br>for the Bitcoin community</div>
+    <div id="tier-badge" style="text-align:center;margin-bottom:10px;padding:6px 10px;border-radius:6px;font-size:11px;font-weight:700;background:rgba(247,147,26,.08);border:1px solid var(--orange-dim);color:var(--orange);">🟠 Community</div>
+    <div id="lcc-theme-picker" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;"></div>
+<button class="donate-btn" onclick="openDonateModal()">&#9889; Donate via Lightning</button>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-left"><h1>Lightning Control Center</h1><p>Manage your Bitcoin &amp; Lightning node.</p></div>
+    <div class="topbar-right">
+      <div class="status-pill ok"><div class="dot"></div> Node Online</div>
+      <div class="status-pill ok"><div class="dot"></div> Synced</div>
+      <div class="block-height">Block <span id="block-height">&#8212;</span></div>
+      <div class="balance-display"><div class="sats" id="topbar-sats">&#8212; sats</div><div class="usd" id="topbar-usd">&#8776; $&#8212;</div></div>
+    </div>
+  </header>
+
+  <div class="content">
+    <div class="page-header">
+      <h2>Wallet</h2>
+      <p>On-chain and Lightning balances for prodeskltn-node.</p>
+    </div>
+
+    <!-- Balance cards -->
+    <div class="balance-grid">
+      <div class="balance-card total">
+        <div class="bc-icon">&#8383;</div>
+        <div class="bc-label">Total Balance</div>
+        <div class="bc-value" id="total-bal">&#8212;</div>
+        <div class="bc-usd" id="total-usd">&#8776; $&#8212;</div>
+        <div class="bc-sub">On-chain + Channel</div>
+      </div>
+      <div class="balance-card onchain">
+        <div class="bc-icon">&#128279;</div>
+        <div class="bc-label">On-Chain Balance</div>
+        <div class="bc-value" id="onchain-bal">&#8212;</div>
+        <div class="bc-usd" id="onchain-usd">&#8776; $&#8212;</div>
+        <div class="bc-sub" id="unconfirmed-sub">Confirmed</div>
+      </div>
+      <div class="balance-card channel">
+        <div class="bc-icon">&#9889;</div>
+        <div class="bc-label">Channel Balance</div>
+        <div class="bc-value" id="channel-bal">&#8212;</div>
+        <div class="bc-usd" id="channel-usd">&#8776; $&#8212;</div>
+        <div class="bc-sub">Local spendable</div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-bottom:16px;">
+      <div class="panel-header">
+        <h3>&#128279; Recent On-chain Deposits</h3>
+        <span style="font-size:11px;color:var(--muted)">Last 5</span>
+      </div>
+      <div id="onchain-deposits" style="padding:0;">
+        <div style="padding:20px;text-align:center;color:var(--muted);font-size:12px;">Loading...</div>
+      </div>
+    </div>
+
+    <!-- Receive + Send -->
+    <div class="two-col">
+
+      <!-- Receive -->
+      <div class="panel">
+        <div class="panel-header">
+          <h3>&#11015;&#65039; Receive On-Chain</h3>
+        </div>
+        <div class="panel-body">
+          <div class="qr-box" id="qr-box">&#128247;<br>Generate<br>address</div>
+          <div class="addr-box" id="addr-box"><span class="addr-placeholder">Click "New Address" to generate a deposit address</span></div>
+          <div class="copy-feedback" id="copy-feedback"></div>
+          <div class="btn-row">
+            <button class="btn btn-orange" onclick="generateAddress()">New Address</button>
+            <button class="btn btn-outline" onclick="copyAddress()">Copy</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Send -->
+      <div class="panel">
+        <div class="panel-header">
+          <h3>&#11014;&#65039; Send Payment</h3>
+        </div>
+        <div class="panel-body">
+          <div class="form-group">
+            <label class="form-label">Lightning Invoice or On-Chain Address</label>
+            <textarea class="form-input" id="payment-dest" rows="3" placeholder="lnbc... or bc1q..."></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Amount (sats) — leave blank for invoice amount</label>
+            <input class="form-input" id="payment-amt" type="number" placeholder="0" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Fee Limit (sats)</label>
+            <input class="form-input" id="fee-limit" type="number" placeholder="100" value="100" />
+          </div>
+          <button class="btn btn-orange" style="width:100%" onclick="sendPayment()">Send &#9889;</button>
+          <div class="copy-feedback" id="send-feedback"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Transaction history -->
+    <div class="panel">
+      <div class="panel-header">
+        <h3>Recent Transactions</h3>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <select id="tx-limit" onchange="loadTransactions()" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:3px 8px;border-radius:6px;font-size:11px;font-family:var(--font);cursor:pointer;">
+            <option value="10">Last 10</option>
+            <option value="25">Last 25</option>
+            <option value="50">Last 50</option>
+            <option value="0">All</option>
+          </select>
+          <select id="tx-filter" onchange="loadTransactions()" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:3px 8px;border-radius:6px;font-size:11px;font-family:var(--font);cursor:pointer;">
+            <option value="all">All Types</option>
+            <option value="received">Received</option>
+            <option value="sent">Sent</option>
+            <option value="forwarded">Forwarded</option>
+            <option value="onchain">On-chain</option>
+            <option value="rebalance">Rebalances only</option>
+          </select>
+          <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);cursor:pointer;">
+            <input type="checkbox" id="hide-rebalance" onchange="loadTransactions()" style="accent-color:var(--orange);cursor:pointer;">
+            Hide rebalances
+          </label>
+          <button onclick="exportWalletCSV()" style="background:rgba(247,147,26,.12);border:1px solid var(--orange-dim);color:var(--orange);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:var(--font);">&#8595; Export CSV</button>
+        </div>
+      </div>
+      <table class="tx-table">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody id="tx-tbody"></tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <footer class="statusbar">
+    <div class="sb-item"><span class="sb-icon">&#8383;</span><div><div class="sb-label">Bitcoin Price</div><div class="sb-val" id="btc-price">$&#8212;</div></div></div>
+    <div class="sb-item"><span class="sb-icon">&#128230;</span><div><div class="sb-label">Mempool</div><div class="sb-val" id="mempool-size">&#8212;</div></div></div>
+    <div class="sb-item"><span class="sb-icon">&#128184;</span><div><div class="sb-label">Fee Rate</div><div class="sb-val" id="fee-rate">&#8212;</div></div></div>
+    <div class="sb-item"><span class="sb-icon">&#127760;</span><div><div class="sb-label">Peers</div><div class="sb-val" id="peer-count">&#8212;</div></div></div>
+    <div class="sb-item" style="margin-left:auto;"><span class="sb-icon">&#128336;</span><div><div class="sb-label">Time (UTC)</div><div class="sb-val" id="utc-time">&#8212;</div></div></div>
+  </footer>
+</div>
+
+<script>
+// Session check
+(function(){
+  const s = localStorage.getItem('lcc_session');
+  if(!s){ window.location.href='https://lcc.satslist.shop/static/login.html'; return; }
+  try{
+    const {expires} = JSON.parse(s);
+    if(Date.now() > expires){ localStorage.removeItem('lcc_session'); window.location.href='https://lcc.satslist.shop/static/login.html'; }
+  } catch(e){ window.location.href='https://lcc.satslist.shop/static/login.html'; }
+})();
+const API = 'https://lcc.satslist.shop/api/dashboard';
+const ADDR_API = 'https://lcc.satslist.shop/api/newaddress';
+
+function fmt(n){return Number(n).toLocaleString();}
+function toUsd(sats,price){return '&#8776; $'+((sats/100000000)*price).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+
+function loadOnchainDeposits(){
+  fetch('https://lcc.satslist.shop/api/transactions?limit=100')
+    .then(r=>r.json()).then(data=>{
+      const allDeposits = (data.transactions || [])
+        .filter(t => t.type === 'received' && t.desc && (t.desc.includes('On-chain') || t.desc.includes('sweep') || t.desc.includes('Channel closed')));
+      // Deduplicate by amount — keep most recent
+      const seen = new Set();
+      const deposits = allDeposits.filter(t => {
+        if(seen.has(t.amount)) return false;
+        seen.add(t.amount);
+        return true;
+      }).slice(0, 5);
+      const el = document.getElementById('onchain-deposits');
+      if(!deposits.length){
+        el.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted);font-size:12px;">No on-chain deposits yet</div>';
+        return;
+      }
+      el.innerHTML = deposits.map(t =>
+        '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.04);">' +
+        '<div style="display:flex;align-items:center;gap:10px;">' +
+        '<div style="width:8px;height:8px;border-radius:50%;background:var(--green);"></div>' +
+        '<div><div style="font-size:13px;color:var(--text);">' + t.desc + '</div>' +
+        '<div style="font-size:11px;color:var(--muted);">' + t.time + ' • <span style="color:' + (t.status==='pending'?'var(--orange)':'var(--green)') + ';">● ' + (t.status||'confirmed') + '</span></div>' +
+        (t.tx_hash ? '<div style="font-size:10px;color:#444;font-family:monospace;margin-top:2px;cursor:pointer;" onclick="window.open(\'https://mempool.space/tx/' + t.tx_hash + '\')">' + t.tx_hash.slice(0,16) + '...' + t.tx_hash.slice(-8) + ' ↗</div>' : '') +
+        '</div></div>' +
+
+        '<div style="font-family:var(--mono);font-size:13px;color:var(--green);">+' + Number(t.amount).toLocaleString() + ' sats</div></div>'
+      ).join('');
+    });
+}
+
+function loadTransactions(){
+  const limit = document.getElementById('tx-limit') ? document.getElementById('tx-limit').value : 10;
+  fetch('https://lcc.satslist.shop/api/transactions?limit=' + limit)
+    .then(r=>r.json()).then(data=>{
+      const tbody = document.getElementById('tx-tbody');
+      tbody.innerHTML = '';
+      const filter = document.getElementById('tx-filter') ? document.getElementById('tx-filter').value : 'all';
+      const hideRebalance = document.getElementById('hide-rebalance') ? document.getElementById('hide-rebalance').checked : false;
+      let txs = data.transactions || [];
+      // Apply type filter
+      if(filter === 'received') txs = txs.filter(t => t.type === 'received');
+      else if(filter === 'sent') txs = txs.filter(t => t.type === 'sent');
+      else if(filter === 'forwarded') txs = txs.filter(t => t.type === 'forwarded');
+      else if(filter === 'onchain') txs = txs.filter(t => t.desc && (t.desc.includes('On-chain') || t.desc.includes('Channel') || t.desc.includes('sweep')));
+      else if(filter === 'rebalance') txs = txs.filter(t => t.desc && (t.desc.includes('rebalance') || t.desc.includes('Rebalance')));
+      // Apply hide rebalance checkbox
+      if(hideRebalance) txs = txs.filter(t => !t.desc || (!t.desc.toLowerCase().includes('rebalance')));
+      if(!txs.length){
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">No transactions found</td></tr>';
+        return;
+      }
+      txs.forEach(tx=>{
+        const isPos = tx.type === 'received';
+        const isNeg = tx.type === 'sent';
+        const dotClass = tx.type === 'received' ? 'received' : tx.type === 'sent' ? 'sent' : 'forwarded';
+        const amtClass = isPos ? 'pos' : isNeg ? 'neg' : '';
+        const amtPrefix = isPos ? '+' : isNeg ? '-' : '';
+        tbody.innerHTML += '<tr>' +
+          '<td><div class="tx-type"><div class="tx-dot ' + dotClass + '"></div>' + tx.type + '</div></td>' +
+          '<td class="tx-amount ' + amtClass + '">' + amtPrefix + fmt(Math.abs(tx.amount)) + ' sats</td>' +
+          '<td style="color:var(--muted);font-family:var(--font)">' + (tx.desc||'') + (tx.fee && tx.desc && tx.desc.includes('rebalance') ? ' <span style="color:var(--red);font-size:10px;">(-' + fmt(tx.fee) + ' sats fee)</span>' : '') + '</td>' +
+          '<td><span class="tag confirmed">' + (tx.status||'confirmed') + '</span></td>' +
+          '<td style="color:var(--muted)">' + (tx.time||'') + '</td></tr>';
+      });
+    }).catch(()=>{
+      document.getElementById('tx-tbody').innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">Could not load transactions</td></tr>';
+    });
+}
+
+fetch(API).then(r=>r.json()).then(d=>{
+  const price = d.wallet.btc_price_usd;
+  const total = d.wallet.confirmed_balance + d.wallet.channel_balance;
+
+  document.getElementById('block-height').textContent = fmt(d.node.block_height);
+  document.getElementById('topbar-sats').textContent = fmt(total) + ' sats';
+  document.getElementById('topbar-usd').innerHTML = toUsd(total, price);
+
+  document.getElementById('total-bal').textContent = fmt(total) + ' sats';
+  document.getElementById('total-usd').innerHTML = toUsd(total, price);
+  document.getElementById('onchain-bal').textContent = fmt(d.wallet.confirmed_balance) + ' sats';
+  document.getElementById('onchain-usd').innerHTML = toUsd(d.wallet.confirmed_balance, price);
+  document.getElementById('channel-bal').textContent = fmt(d.wallet.channel_balance) + ' sats';
+  document.getElementById('channel-usd').innerHTML = toUsd(d.wallet.channel_balance, price);
+
+  if(d.wallet.unconfirmed_balance > 0){
+    document.getElementById('unconfirmed-sub').textContent = fmt(d.wallet.unconfirmed_balance) + ' sats unconfirmed';
+    document.getElementById('unconfirmed-sub').style.color = 'var(--orange)';
+  }
+
+  document.getElementById('btc-price').textContent = '$' + price.toLocaleString();
+  document.getElementById('mempool-size').textContent = d.mempool.size_mb + ' MB';
+  document.getElementById('fee-rate').textContent = d.mempool.fee_sat_vbyte + ' sat/vB';
+  document.getElementById('peer-count').textContent = d.node.num_peers + ' peers';
+
+  loadTransactions();
+  loadOnchainDeposits();
+});
+
+let currentAddress = '';
+
+function generateAddress() {
+  fetch(ADDR_API, {headers:{'x-api-key':'lcc-local-only'}}).then(r=>r.json()).then(d=>{
+    currentAddress = d.address;
+    document.getElementById('addr-box').textContent = d.address;
+    document.getElementById('qr-box').innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=bitcoin%3A' + d.address + '&bgcolor=ffffff&color=000000&margin=0" alt="QR" style="border-radius:8px;" />';
+  });
+}
+
+function copyAddress() {
+  if(!currentAddress){ document.getElementById('copy-feedback').textContent = 'Generate an address first'; return; }
+  navigator.clipboard.writeText(currentAddress).then(()=>{
+    document.getElementById('copy-feedback').textContent = '&#10003; Address copied!';
+    setTimeout(()=>document.getElementById('copy-feedback').textContent='', 2000);
+  });
+}
+
+function sendPayment() {
+  const dest = document.getElementById('payment-dest').value.trim();
+  const amt = document.getElementById('payment-amt').value.trim();
+  const fb = document.getElementById('send-feedback');
+  if(!dest){ fb.textContent = 'Enter a payment destination'; fb.style.color = 'var(--red)'; return; }
+  if(!confirm('Send payment to:\n' + dest.substring(0,40) + '...\n' + (amt ? amt + ' sats' : 'Invoice amount') + '\n\nConfirm?')) return;
+  fb.textContent = 'Sending...';
+  fb.style.color = 'var(--orange)';
+  fetch('https://lcc.satslist.shop/api/sendpayment', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({dest: dest, amount: parseInt(amt) || 0})
+  }).then(r=>r.json()).then(d=>{
+    if(d.status === 'success'){
+      fb.textContent = '✅ ' + d.detail + (d.fee ? ' (fee: ' + d.fee + ' sats)' : '');
+      fb.style.color = 'var(--green)';
+      document.getElementById('payment-dest').value = '';
+      document.getElementById('payment-amt').value = '';
+      setTimeout(()=>loadTransactions(), 2000);
+    } else {
+      fb.textContent = '❌ ' + (d.detail || 'Payment failed');
+      fb.style.color = 'var(--red)';
+    }
+  }).catch(()=>{
+    fb.textContent = '❌ Payment failed — check connection';
+    fb.style.color = 'var(--red)';
+  });
+}
+
+
+  function openDonateModal(){document.getElementById('donate-modal').classList.add('show');}
+  function closeDonateModal(){document.getElementById('donate-modal').classList.remove('show');}
+  function copyDonateAddress(){
+    navigator.clipboard.writeText('zap@satslist.shop').then(()=>{
+      const btn=document.querySelector('.donate-copy-btn');
+      btn.textContent='✅ Copied!';
+      btn.style.background='#22c55e';
+      setTimeout(()=>{btn.textContent='📋 Copy Lightning Address';btn.style.background='';},2000);
+    });
+  }
+
+  function updateTime(){document.getElementById('utc-time').textContent=new Date().toUTCString().split(' ').slice(1,5).join(' ');}
+updateTime();setInterval(updateTime,1000);
+</script>
+<div class="cmd-overlay" id="cmd-palette" onclick="if(event.target===this)closeCmd()">
+  <div class="cmd-box">
+    <div class="cmd-input-wrap">
+      <span>⚡</span>
+      <input class="cmd-input" id="cmd-input" placeholder="Type a command or page name..." autocomplete="off" />
+      <span style="font-size:11px;color:#444;">ESC to close</span>
+    </div>
+    <div class="cmd-results" id="cmd-results"></div>
+  </div>
+</div>
+<div class="donate-modal-overlay" id="donate-modal" onclick="if(event.target===this)closeDonateModal()">
+  <div class="donate-modal">
+    <button class="donate-modal-x" onclick="closeDonateModal()">&#10005;</button>
+    <h3>&#9889; Support LCC</h3>
+    <p>Scan with any Lightning wallet to donate</p>
+    <div class="donate-qr">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=184x184&data=lightning%3Azap%40satslist.shop&bgcolor=ffffff&color=000000&margin=0" alt="Lightning QR" />
+    </div>
+    <div class="donate-address">zap@satslist.shop</div>
+    <button class="donate-copy-btn" onclick="copyDonateAddress()">📋 Copy Lightning Address</button>
+    <button class="donate-close" onclick="closeDonateModal()">Close</button>
+  </div>
+</div>
+<script>
+const TIER_LABELS = {
+  community: '🟠 Community',
+  personal: '⚡ Personal',
+  pro: '🏢 Pro'
+};
+fetch('/api/tier').then(r=>r.json()).then(d=>{
+  window.LCC_TIER = d.tier;
+  const badge = document.getElementById('tier-badge');
+  if(badge) badge.textContent = TIER_LABELS[d.tier] || '🟠 Community';
+});
+</script>
+<script>
+const CMD_COMMANDS = [
+  // Navigation
+  {icon:'🏠', label:'Dashboard', hint:'Go to Dashboard', action:()=>location.href='https://lcc.satslist.shop/'},
+  {icon:'💳', label:'Wallet', hint:'Go to Wallet', action:()=>location.href='https://lcc.satslist.shop/static/wallet.html'},
+  {icon:'🔗', label:'Channels', hint:'Go to Channels', action:()=>location.href='https://lcc.satslist.shop/static/channels.html'},
+  {icon:'🔀', label:'Routing', hint:'Go to Routing', action:()=>location.href='https://lcc.satslist.shop/static/routing.html'},
+  {icon:'👥', label:'Peers', hint:'Go to Peers', action:()=>location.href='https://lcc.satslist.shop/static/peers.html'},
+  {icon:'📊', label:'Analytics', hint:'Go to Analytics', action:()=>location.href='https://lcc.satslist.shop/static/analytics.html'},
+  {icon:'🔔', label:'Alerts', hint:'Go to Alerts', action:()=>location.href='https://lcc.satslist.shop/static/alerts.html'},
+  {icon:'⛏️', label:'Mining', hint:'Go to Mining', action:()=>location.href='https://lcc.satslist.shop/static/mining.html'},
+  {icon:'💻', label:'System', hint:'Go to System', action:()=>location.href='https://lcc.satslist.shop/static/system.html'},
+  {icon:'⚙️', label:'Settings', hint:'Go to Settings', action:()=>location.href='https://lcc.satslist.shop/static/settings.html'},
+  {icon:'📓', label:'Journal', hint:'Go to Node Journal', action:()=>location.href='https://lcc.satslist.shop/static/journal.html'},
+  // Quick Actions
+  {icon:'📋', label:'Copy Pubkey', hint:'Copy your node pubkey to clipboard', action:()=>{
+    fetch('https://lcc.satslist.shop/api/node').then(r=>r.json()).then(d=>navigator.clipboard.writeText(d.pubkey).then(()=>alert('Pubkey copied!')));
+  }},
+  {icon:'🔀', label:'Rebalance Channels', hint:'Go to Alerts page to rebalance', action:()=>location.href='https://lcc.satslist.shop/static/alerts.html'},
+  {icon:'💰', label:'Update Fees', hint:'Go to Routing page to update channel fees', action:()=>location.href='https://lcc.satslist.shop/static/routing.html'},
+  {icon:'🐙', label:'GitHub', hint:'View LCC source code on GitHub', action:()=>window.open('https://github.com/lioranecho-cpu/lightning-control-center','_blank')},
+  {icon:'🛒', label:'SatsList', hint:'Open SatsList Bitcoin marketplace', action:()=>window.open('https://satslist.shop','_blank')},
+  {icon:'⚡', label:'Donate', hint:'Support LCC via Lightning — zap@satslist.shop', action:()=>openDonateModal()},
+
+  // Shortcuts reference
+  // Logout
+  {icon:'🚪', label:'Logout', hint:'Log out of LCC', action:()=>logout()},
+];
+let cmdActive = -1;
+function openCmd(){
+  const tier = window.LCC_TIER || 'community';
+  if(tier === 'community'){
+    alert('Command Palette is a Personal feature. Upgrade at satslist.shop');
+    return;
+  }
+  document.getElementById('cmd-palette').classList.add('show');
+  document.getElementById('cmd-input').value = '';
+  cmdActive = -1;
+  renderCmd('');
+  setTimeout(()=>document.getElementById('cmd-input').focus(), 50);
+}
+function closeCmd(){
+  document.getElementById('cmd-palette').classList.remove('show');
+  cmdActive = -1;
+}
+function renderCmd(query){
+  const results = document.getElementById('cmd-results');
+  const q = query.toLowerCase().trim();
+  const filtered = q ? CMD_COMMANDS.filter(c=>c.label.toLowerCase().includes(q)||c.hint.toLowerCase().includes(q)) : CMD_COMMANDS;
+  if(!filtered.length){
+    results.innerHTML = '<div class="cmd-empty">No results for "' + query + '"</div>';
+    return;
+  }
+  results.innerHTML = filtered.map((c,i)=>
+    '<div class="cmd-item' + (i===cmdActive?' active':'') + '" onclick="runCmd(' + CMD_COMMANDS.indexOf(c) + ')">' +
+    '<span class="cmd-icon">' + c.icon + '</span>' +
+    '<span class="cmd-label">' + c.label + '</span>' +
+    '<span class="cmd-hint">' + c.hint + '</span></div>'
+  ).join('');
+}
+function runCmd(idx){
+  CMD_COMMANDS[idx].action();
+  closeCmd();
+}
+document.addEventListener('keydown', e=>{
+  if(e.ctrlKey && e.key===' '){
+    e.preventDefault();
+    const pal = document.getElementById('cmd-palette');
+    if(pal.classList.contains('show')) closeCmd();
+    else openCmd();
+    return;
+  }
+  if(!document.getElementById('cmd-palette').classList.contains('show')) return;
+  const items = document.getElementById('cmd-results').querySelectorAll('.cmd-item');
+  if(e.key==='Escape') closeCmd();
+  if(e.key==='ArrowDown'){ e.preventDefault(); cmdActive=Math.min(cmdActive+1,items.length-1); items.forEach((el,i)=>el.classList.toggle('active',i===cmdActive)); }
+  if(e.key==='ArrowUp'){ e.preventDefault(); cmdActive=Math.max(cmdActive-1,0); items.forEach((el,i)=>el.classList.toggle('active',i===cmdActive)); }
+  if(e.key==='Enter' && cmdActive>=0) items[cmdActive].click();
+});
+document.addEventListener('DOMContentLoaded',()=>{
+  const input = document.getElementById('cmd-input');
+  if(input) input.addEventListener('input', e=>{ cmdActive=-1; renderCmd(e.target.value); });
+});
+</script>
+
+<script>
+function toggleSidebar(){
+  const tier = window.LCC_TIER || 'community';
+  if(tier === 'community'){
+    alert('Collapsing sidebar is a Personal feature. Upgrade at satslist.shop');
+    return;
+  }
+  const sidebar = document.querySelector('.sidebar');
+  const main = document.querySelector('.main-content') || document.querySelector('main') || document.querySelector('.content');
+  sidebar.classList.toggle('collapsed');
+  if(main) main.classList.toggle('expanded');
+  localStorage.setItem('lcc_sidebar', sidebar.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  const saved = localStorage.getItem('lcc_sidebar');
+  if(saved === 'collapsed'){
+    const tier = window.LCC_TIER || 'community';
+    if(tier !== 'community'){
+      const sidebar = document.querySelector('.sidebar');
+      const main = document.querySelector('.main-content') || document.querySelector('main') || document.querySelector('.content');
+      sidebar.classList.add('collapsed');
+      if(main) main.classList.add('expanded');
+    }
+  }
+});
+</script>
+
+<script>
+function exportWalletCSV(){
+  const tier = window.LCC_TIER || 'community';
+  if(tier === 'community'){
+    alert('CSV Export is a Personal feature. Upgrade at satslist.shop');
+    return;
+  }
+  const rows = document.querySelectorAll('.tx-table tr');
+  if(!rows.length){ alert('No data to export.'); return; }
+  const csv = Array.from(rows).map(row=>
+    Array.from(row.querySelectorAll('th,td')).map(cell=>'"'+cell.innerText.replace(/"/g,'""')+'"').join(',')
+  ).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'lcc_wallet_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+</script>
+
+<script>
+function launchGame(){
+  const overlay = document.getElementById('satoshi-game');
+  if(overlay) { overlay.style.display='flex'; }
+  else { location.href='https://lcc.satslist.shop/dashboard'; }
+}
+</script>
+
+<script>
+if(typeof logout === 'undefined') function logout(){localStorage.removeItem('lcc_session');window.location.href='https://lcc.satslist.shop/static/login.html';}
+</script>
+
+
+
+
+<script>
+// Highlight active nav item based on current URL
+(function(){
+  const path = window.location.pathname + window.location.href;
+  const items = document.querySelectorAll('.nav-item');
+  items.forEach(item => {
+    const onclick = item.getAttribute('onclick') || '';
+    if(onclick.includes('dashboard') && (path.includes('dashboard') || path.endsWith('/'))) item.classList.add('active');
+    else if(onclick.includes('channels') && path.includes('channels')) item.classList.add('active');
+    else if(onclick.includes('peers') && path.includes('peers')) item.classList.add('active');
+    else if(onclick.includes('routing') && path.includes('routing')) item.classList.add('active');
+    else if(onclick.includes('wallet') && path.includes('wallet')) item.classList.add('active');
+    else if(onclick.includes('analytics') && path.includes('analytics')) item.classList.add('active');
+    else if(onclick.includes('alerts') && path.includes('alerts')) item.classList.add('active');
+    else if(onclick.includes('mining') && path.includes('mining')) item.classList.add('active');
+    else if(onclick.includes('system') && path.includes('system')) item.classList.add('active');
+    else if(onclick.includes('settings') && path.includes('settings')) item.classList.add('active');
+    else if(onclick.includes('journal') && path.includes('journal')) item.classList.add('active');
+  });
+})();
+</script>
+</body>
+</html>

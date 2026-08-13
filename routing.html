@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LCC — Routing</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg:#0f1117;--surface:#161b27;--surface2:#1c2233;--border:#252d3d;
+      --orange:#f7931a;--orange-dim:#b36a12;--green:#22c55e;--red:#ef4444;
+      --blue:#3b82f6;--text:#f0f0f0;--muted:#888;
+      --font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono','Courier New',monospace;
+      --radius:10px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--bg);color:var(--text);font-family:var(--font);display:flex;min-height:100vh;font-size:14px;}
+    .sidebar{width:220px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;}
+    .sidebar-logo{display:flex;align-items:center;gap:10px;padding:20px 18px;border-bottom:1px solid var(--border);}
+    .sidebar-logo .bolt{font-size:22px;}
+    .logo-text{display:flex;flex-direction:column;line-height:1.2;}
+    .logo-text span:first-child{font-weight:700;font-size:15px;}
+    .logo-text span:last-child{font-size:10px;color:var(--orange);letter-spacing:.08em;text-transform:uppercase;}
+    .nav{flex:1;padding:12px 0;overflow-y:auto;min-height:0;}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:10px 18px;color:var(--muted);cursor:pointer;border-left:3px solid transparent;transition:all .15s;font-size:13.5px;}
+    .nav-item:hover{color:var(--text);background:var(--surface2);}
+    .nav-item.active{color:var(--orange);border-left-color:var(--orange);background:rgba(247,147,26,.06);}
+    .nav-item .icon{font-size:15px;width:18px;text-align:center;}
+    .nav-section{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);padding:14px 18px 4px;}
+    .sidebar-footer{padding:14px 18px;border-top:1px solid var(--border);}
+    .version-badge{font-size:10px;color:var(--muted);margin-bottom:8px;}
+    .community-badge{font-size:10px;color:var(--muted);text-align:center;padding:0 0 6px;line-height:1.5;}
+    .donate-btn{width:100%;background:rgba(247,147,26,.12);border:1px solid var(--orange-dim);color:var(--orange);padding:8px;border-radius:var(--radius);cursor:pointer;font-size:12px;font-family:var(--font);transition:background .15s;}
+    .donate-btn:hover{background:rgba(247,147,26,.2);}
+    .main{margin-left:220px;flex:1;display:flex;flex-direction:column;}
+    .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+    .topbar-left h1{font-size:16px;font-weight:700;}
+    .topbar-left p{font-size:11px;color:var(--muted);}
+    .topbar-right{display:flex;align-items:center;gap:20px;}
+    .status-pill{display:flex;align-items:center;gap:6px;font-size:12px;}
+    .status-pill.ok{color:var(--green);}
+    .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);}
+    .block-height{font-family:var(--mono);font-size:12px;color:var(--muted);}
+    .block-height span{color:var(--orange);font-weight:600;}
+    .balance-display{text-align:right;}
+    .balance-display .sats{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--orange);}
+    .balance-display .usd{font-size:11px;color:var(--muted);}
+    .content{padding:24px;flex:1;}
+    .page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;}
+    .page-header h2{font-size:20px;font-weight:700;}
+    .page-header p{font-size:12px;color:var(--muted);margin-top:2px;}
+
+    /* Summary cards */
+    .summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+    .summary-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+    .sc-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px;}
+    .sc-value{font-family:var(--mono);font-size:22px;font-weight:700;}
+    .sc-value.orange{color:var(--orange);}
+    .sc-value.green{color:var(--green);}
+    .sc-value.blue{color:var(--blue);}
+    .sc-sub{font-size:11px;color:var(--muted);margin-top:4px;}
+
+    /* Charts row */
+    .charts-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px;}
+    .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+    .panel-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);}
+    .panel-header h3{font-size:13px;font-weight:600;}
+    .panel-meta{font-size:12px;color:var(--orange);font-family:var(--mono);}
+    .chart-container{padding:16px;height:180px;position:relative;}
+
+    /* Bottom row */
+    .bottom-row{display:grid;grid-template-columns:1fr 320px;gap:14px;margin-bottom:24px;}
+
+    /* Forwarding table */
+    .fwd-table{width:100%;border-collapse:collapse;}
+    .fwd-table th{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);font-weight:500;}
+    .fwd-table td{padding:11px 14px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.04);font-family:var(--mono);}
+    .fwd-table tr:last-child td{border-bottom:none;}
+    .fwd-table tr:hover td{background:var(--surface2);}
+    .fee-earned{color:var(--green);font-weight:600;}
+
+    /* Fee policy panel */
+    .fee-form{padding:16px;}
+    .form-group{margin-bottom:14px;}
+    .form-label{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:6px;display:block;}
+    .form-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;transition:border-color .15s;}
+    .form-input:focus{border-color:var(--orange-dim);}
+    .btn{padding:9px 16px;border-radius:8px;border:none;cursor:pointer;font-family:var(--font);font-size:13px;font-weight:600;transition:all .15s;width:100%;}
+    .btn-orange{background:var(--orange);color:#000;}
+    .btn-orange:hover{background:#e8851a;}
+    .fee-preview{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--muted);}
+    .fee-preview span{color:var(--orange);font-family:var(--mono);}
+
+    /* Empty state */
+    .empty-state{padding:40px;text-align:center;color:var(--muted);}
+    .empty-icon{font-size:32px;margin-bottom:12px;}
+    .empty-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px;}
+    .empty-sub{font-size:12px;line-height:1.6;}
+
+    /* Status bar */
+    .statusbar{background:var(--surface);border-top:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:32px;}
+    .sb-item{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);}
+    .sb-icon{font-size:14px;}
+    .sb-val{color:var(--text);font-family:var(--mono);}
+    .sb-label{font-size:10px;}
+
+  /* ── DONATE MODAL ── */
+  .cmd-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:10000;align-items:flex-start;justify-content:center;padding-top:120px;}
+  .cmd-overlay.show{display:flex;}
+  .cmd-box{background:#161b27;border:1px solid #f7931a44;border-radius:12px;width:100%;max-width:560px;overflow:hidden;box-shadow:0 24px 64px #000a;}
+  .cmd-input-wrap{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid #252d3d;}
+  .cmd-input-wrap span{font-size:16px;}
+  .cmd-input{flex:1;background:transparent;border:none;outline:none;color:#f0f0f0;font-size:15px;font-family:var(--font);}
+  .cmd-input::placeholder{color:#555;}
+  .cmd-results{max-height:320px;overflow-y:auto;}
+  .cmd-item{display:flex;align-items:center;gap:12px;padding:11px 16px;cursor:pointer;font-size:13px;color:#ccc;transition:background .1s;}
+  .cmd-item:hover,.cmd-item.active{background:rgba(247,147,26,.08);color:#f7931a;}
+  .cmd-item .cmd-icon{font-size:15px;width:20px;text-align:center;}
+  .cmd-item .cmd-label{flex:1;}
+  .cmd-item .cmd-hint{font-size:11px;color:#555;}
+  .cmd-empty{padding:20px;text-align:center;color:#555;font-size:13px;}
+  .donate-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;align-items:center;justify-content:center;}
+  .donate-modal-overlay.show{display:flex;}
+  .donate-modal{background:#161b27;border:1px solid #252d3d;border-radius:16px;padding:28px;max-width:320px;width:90%;text-align:center;position:relative;}
+  .donate-modal h3{font-size:16px;font-weight:700;color:#f0f0f0;margin-bottom:4px;}
+  .donate-modal p{font-size:12px;color:#888;margin-bottom:20px;}
+  .donate-qr{width:200px;height:200px;margin:0 auto 16px;border-radius:8px;background:#fff;padding:8px;}
+  .donate-qr img{width:100%;height:100%;}
+  .donate-address{background:#0f1117;border:1px solid #252d3d;border-radius:8px;padding:10px 12px;font-family:'JetBrains Mono','Courier New',monospace;font-size:12px;color:#f7931a;margin-bottom:16px;word-break:break-all;}
+  .donate-copy-btn{width:100%;background:#f7931a;color:#000;border:none;border-radius:8px;padding:10px;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;margin-bottom:10px;}
+  .donate-copy-btn:hover{background:#e8851a;}
+  .donate-close{background:transparent;border:1px solid #252d3d;color:#888;border-radius:8px;padding:8px 16px;font-family:var(--font);font-size:12px;cursor:pointer;width:100%;}
+  .donate-close:hover{border-color:#ef4444;color:#ef4444;}
+  .donate-modal-x{position:absolute;top:12px;right:14px;background:none;border:none;color:#888;font-size:18px;cursor:pointer;line-height:1;}
+  .donate-modal-x:hover{color:#f0f0f0;}
+
+  
+  .sidebar{transition:width .2s ease;}
+  .sidebar.collapsed{width:60px;}
+  .sidebar.collapsed .logo-text,
+  .sidebar.collapsed .nav-section,
+  .sidebar.collapsed .community-badge,
+  .sidebar.collapsed .version-badge,
+  .sidebar.collapsed .donate-btn,
+  .sidebar.collapsed #tier-badge,
+  .sidebar.collapsed .nav-label,
+  .sidebar.collapsed .cmd-hint{display:none;}
+  .sidebar.collapsed [style*="margin-left:auto"]{display:none;}
+  .sidebar.collapsed .nav-item{justify-content:center;padding:10px 0;}
+  .sidebar.collapsed .sidebar-logo{justify-content:center;padding:20px 0;}
+  .sidebar.collapsed .sidebar-footer{padding:8px 0;text-align:center;}
+  .sidebar-toggle{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:4px 8px;border-radius:6px;transition:color .15s;}
+  .sidebar-toggle:hover{color:var(--orange);}
+  .main-content{transition:margin-left .2s ease;}
+  .main-content.expanded{margin-left:60px;}
+  .sidebar.collapsed ~ .main-content{margin-left:60px;}
+
+
+  /* ── TOOLTIPS ── */
+  .tip{position:relative;cursor:help;}
+  .tip::after{
+    content:attr(data-tip);
+    position:absolute;
+    top:calc(100% + 8px);
+    left:0;
+    transform:none;
+    background:#0a0d14;
+    color:#f0f0f0;
+    border:1px solid #252d3d;
+    border-radius:8px;
+    padding:8px 12px;
+    font-size:11px;
+    font-family:'Inter',system-ui,sans-serif;
+    line-height:1.5;
+    width:220px;
+    text-align:center;
+    white-space:normal;
+    pointer-events:none;
+    opacity:0;
+    transition:opacity .15s;
+    z-index:9999;
+    box-shadow:0 4px 20px rgba(0,0,0,.5);
+  }
+  .tip:hover::after{opacity:1;}
+  .tip-right::after{left:auto;right:0;transform:none;}
+  .tip-left::after{left:0;transform:none;}
+</style>
+  <script src="/static/lcc-theme.js?v=3"></script>
+<script src="mock.js"></script>
+<script src="mock.js"></script>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo"><span class="bolt">&#9889;</span><div class="logo-text"><span>Lightning Control</span><span>Center</span></div></div>
+  <div style="text-align:center;padding:6px 0;border-bottom:1px solid var(--border);"><button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">&#9776;</button></div>
+  <nav class="nav">
+        <div class="nav-section">Node</div>
+    <div class="nav-item" onclick="location.href='https://lcc.satslist.shop/dashboard'"><span class="icon">&#127968;</span><span class="nav-label"> Dashboard</span></div>
+    <div class="nav-item" onclick="location.href='https://lcc.satslist.shop/static/channels.html'"><span class="icon">&#9889;</span><span class="nav-label"> Channels</span></div>
+    <div class="nav-item" onclick="location.href='https://lcc.satslist.shop/static/peers.html'"><span class="icon">&#128101;</span><span class="nav-label"> Peers</span></div>
+    <div class="nav-item" onclick="location.href='https://lcc.satslist.shop/static/routing.html'"><span class="icon">&#128256;</span><span class="nav-label"> Routing</span></div>
+    <div class="nav-item" onclick="location.href='https://lcc.satslist.shop/static/wallet.html'"><span class="icon">&#128091;</span><span class="nav-label"> Wallet</span></div>
+    <div class="nav-section">Tools</div>
+    <div class="nav-item" onclick="openCmd()"><span class="icon">&#9211;</span><span class="nav-label"> Palette </span><span style="font-size:10px;color:#555;margin-left:auto;">Ctrl+Space</span></div>
+    <div class="nav-item" onclick="location.href='https://lcc.satslist.shop/static/analytics.html'"><span class="icon">&#128202;</span><span class="nav-label"> Analytics</span></div>
+    <div class="nav-item" onclick="location.href='https://lcc.satslist.shop/static/journal.html'"><span class="icon">&#128221;</span><span class="nav-label"> Node Journal</span></div>
+    <div class="nav-item" onclick="location.href='https://lcc.satslist.shop/static/alerts.html'"><span class="icon">&#128276;</span><span class="nav-label"> Alerts</span></div>
+    <div class="nav-item" onclick="location.href='https://lcc.satslist.shop/static/treasury.html'"><span class="icon">&#128176;</span><span class="nav-label"> Treasury</span></div>
+    <div class="nav-item" onclick="window.open('http://192.168.4.76:8001','LiveStream','width=1000,height=650,menubar=no,toolbar=no,location=no')" style="color:var(--green);"><span class="icon">📡</span><span class="nav-label"> Live Stream</span></div>
+    <div class="nav-item" onclick="location.href='https://lcc.satslist.shop/static/nwc.html'"><span class="icon">⚡</span><span class="nav-label"> NWC <span style='font-size:9px;background:var(--orange-dim);border:1px solid var(--orange);color:var(--orange);padding:1px 5px;border-radius:10px;margin-left:4px;'>PRO</span></span></div>
+    <div class="nav-section">System</div>
+    <div class="nav-item" onclick="location.href='https://lcc.satslist.shop/static/mining.html'"><span class="icon">&#9935;</span><span class="nav-label"> Mining</span></div>
+    <div class="nav-item" onclick="location.href='https://lcc.satslist.shop/static/system.html'"><span class="icon">&#128421;</span><span class="nav-label"> System</span></div>
+    <div class="nav-item" onclick="location.href='https://lcc.satslist.shop/static/integrations.html'"><span class="icon">&#128279;</span><span class="nav-label"> Integrations</span></div>
+    <div class="nav-item" onclick="window.open('https://satslist.shop','_blank')"><span class="icon">&#128279;</span><span class="nav-label"> SatsList</span></div>
+    <div class="nav-item" onclick="location.href='https://lcc.satslist.shop/static/settings.html'"><span class="icon">&#9881;</span><span class="nav-label"> Settings</span></div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="version-badge">LCC v0.1.2</div>
+    <div class="community-badge">Made with &#9889; and &#8383;<br>for the Bitcoin community</div>
+    <div id="tier-badge" style="text-align:center;margin-bottom:10px;padding:6px 10px;border-radius:6px;font-size:11px;font-weight:700;background:rgba(247,147,26,.08);border:1px solid var(--orange-dim);color:var(--orange);">🟠 Community</div>
+    <div id="lcc-theme-picker" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;"></div>
+<button class="donate-btn" onclick="openDonateModal()">&#9889; Donate via Lightning</button>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-left"><h1>Lightning Control Center</h1><p>Manage your Bitcoin &amp; Lightning node.</p></div>
+    <div class="topbar-right">
+      <div class="status-pill ok"><div class="dot"></div> Node Online</div>
+      <div class="status-pill ok"><div class="dot"></div> Synced</div>
+      <div class="block-height">Block <span id="block-height">&#8212;</span></div>
+      <div class="balance-display"><div class="sats" id="topbar-sats">&#8212; sats</div><div class="usd" id="topbar-usd">&#8776; $&#8212;</div></div>
+    </div>
+  </header>
+
+  <div class="content">
+    <div class="page-header">
+      <div>
+        <h2>Routing</h2>
+        <p>Forwarding history and fee earnings from your node.</p>
+      </div>
+    </div>
+
+    <!-- Summary cards -->
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="sc-label"><span class="tip" data-tip="Total sats earned by forwarding Lightning payments through your node in the last 30 days"><span class="tip" data-tip="Total sats earned by forwarding Lightning payments through your node in the last 30 days"><span class="tip" data-tip="Total sats earned by forwarding Lightning payments through your node in the last 30 days" id="fees-earned-label">Fees Earned (30D)</span></span></span></div>
+        <div class="sc-value orange" id="fees-30d">0 sats</div>
+        <div class="sc-sub" id="fees-usd">$0.00</div>
+      </div>
+      <div class="summary-card">
+        <div class="sc-label"><span class="tip" data-tip="Total value of payments forwarded through your node in BTC"><span class="tip" data-tip="Total value of payments forwarded through your node in BTC"><span class="tip" data-tip="Total value of payments forwarded through your node in BTC" id="volume-earned-label">Routed Volume (30D)</span></span></span></div>
+        <div class="sc-value blue" id="volume-30d">0 BTC</div>
+        <div class="sc-sub">payments forwarded</div>
+      </div>
+      <div class="summary-card">
+        <div class="sc-label" id="events-earned-label">Total Events (30D)</div>
+        <div class="sc-value" id="events-30d">0</div>
+        <div class="sc-sub">forwarding events</div>
+      </div>
+      <div class="summary-card">
+        <div class="sc-label"><span class="tip" data-tip="Average sats earned per forwarded payment. Increases as you raise your fee rate"><span class="tip" data-tip="Average sats earned per forwarded payment. Increases as you raise your fee rate"><span class="tip" data-tip="Average sats earned per forwarded payment. Increases as you raise your fee rate">Avg Fee Per Route</span></span></span></div>
+        <div class="sc-value green" id="avg-fee">0 sats</div>
+        <div class="sc-sub">per forwarded payment</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-row">
+      <div class="panel">
+        <div class="panel-header">
+          <h3>Daily Routing Fees</h3>
+          <span class="panel-meta" id="fees-label">0 sats (30D)</span>
+        </div>
+        <div class="chart-container">
+          <canvas id="feesChart"></canvas>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <h3>Daily Routed Volume</h3>
+          <span class="panel-meta" id="volume-label">0 BTC (30D)</span>
+        </div>
+        <div class="chart-container">
+          <canvas id="volumeChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Forwarding history + Fee policy -->
+    <div class="bottom-row">
+
+      <!-- Forwarding history -->
+      <div class="panel">
+        <div class="panel-header">
+          <h3>Forwarding History</h3>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <select id="routing-period" onchange="loadRouting()" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:3px 8px;border-radius:6px;font-size:11px;font-family:var(--font);cursor:pointer;">
+              <option value="1">Last 24 hrs</option>
+              <option value="7">Last 7 days</option>
+              <option value="10">Last 10 days</option>
+              <option value="30">Last 30 days</option>
+              <option value="60">Last 60 days</option>
+              <option value="365">All time</option>
+            </select>
+            <select id="routing-sort" onchange="loadRouting()" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:3px 8px;border-radius:6px;font-size:11px;font-family:var(--font);cursor:pointer;">
+              <option value="desc">Newest first</option>
+              <option value="asc">Oldest first</option>
+            </select>
+            <button onclick="exportRoutingCSV()" style="background:rgba(247,147,26,.12);border:1px solid var(--orange-dim);color:var(--orange);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:var(--font);">&#8595; Export CSV</button>
+          </div>
+        </div>
+        <div id="fwd-content">
+          <div class="empty-state">
+            <div class="empty-icon">&#9203;</div>
+            <div class="empty-title">No routing events yet</div>
+            <div class="empty-sub">Once your LN+ channels open and the network discovers your node, forwarding events will appear here.<br><br>Check back after your 4 pending channels are active.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fee Policy -->
+      <div class="panel">
+        <div class="panel-header">
+          <h3>Fee Policy</h3>
+        </div>
+        <div class="fee-form">
+          <div class="fee-preview">
+            Current: Base <span id="current-base">0</span> msat &nbsp;|&nbsp; Rate <span id="current-ppm">0</span> ppm
+          </div>
+          <div class="form-group">
+            <label class="form-label">Base Fee (msat)</label>
+            <input class="form-input" id="base-fee" type="number" value="1000" placeholder="1000" />
+            <div style="font-size:10px;color:var(--muted);margin-top:4px;">Fixed fee per payment regardless of size</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Fee Rate (ppm)</label>
+            <input class="form-input" id="fee-rate-input" type="number" value="100" placeholder="100" />
+            <div style="font-size:10px;color:var(--muted);margin-top:4px;">Parts per million of payment amount (100 = 0.01%)</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Time Lock Delta</label>
+            <input class="form-input" id="time-lock" type="number" value="40" placeholder="40" />
+            <div style="font-size:10px;color:var(--muted);margin-top:4px;">CLTV delta for routed payments</div>
+          </div>
+          <button class="btn btn-orange" onclick="updateFees()">Update All Channels</button>
+          <div id="fee-update-status" style="font-size:11px;color:var(--muted);margin-top:10px;text-align:center;">Phase 2: runs lncli updatechanpolicy on ProDesk</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Recommended fee settings info box -->
+    <div style="background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:var(--radius);padding:16px;margin-bottom:24px;">
+      <div style="font-size:13px;font-weight:600;color:var(--blue);margin-bottom:8px;">&#128161; Recommended Fee Settings for New Nodes</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+        <b style="color:var(--text)">Start low to attract routing:</b> Base fee 0-1000 msat, Rate 50-100 ppm<br>
+        <b style="color:var(--text)">Increase after 30 days:</b> Once you have routing history, raise to 100-500 ppm<br>
+        <b style="color:var(--text)">Monitor balance:</b> If local balance drains fast, your fees are too low<br>
+        <b style="color:var(--text)">Your current command:</b> <span style="font-family:var(--mono);color:var(--orange);font-size:11px;">lncli updatechanpolicy --base_fee_msat 1000 --fee_rate 0.0001 --time_lock_delta 40 --all</span>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="statusbar">
+    <div class="sb-item"><span class="sb-icon">&#8383;</span><div><div class="sb-label">Bitcoin Price</div><div class="sb-val" id="btc-price">$&#8212;</div></div></div>
+    <div class="sb-item"><span class="sb-icon">&#128230;</span><div><div class="sb-label">Mempool</div><div class="sb-val" id="mempool-size">&#8212;</div></div></div>
+    <div class="sb-item"><span class="sb-icon">&#128184;</span><div><div class="sb-label">Fee Rate</div><div class="sb-val" id="fee-rate">&#8212;</div></div></div>
+    <div class="sb-item"><span class="sb-icon">&#127760;</span><div><div class="sb-label">Peers</div><div class="sb-val" id="peer-count">&#8212;</div></div></div>
+    <div class="sb-item" style="margin-left:auto;"><span class="sb-icon">&#128336;</span><div><div class="sb-label">Time (UTC)</div><div class="sb-val" id="utc-time">&#8212;</div></div></div>
+  </footer>
+</div>
+
+<script>
+// Session check
+(function(){
+  const s = localStorage.getItem('lcc_session');
+  if(!s){ window.location.href='https://lcc.satslist.shop/static/login.html'; return; }
+  try{
+    const {expires} = JSON.parse(s);
+    if(Date.now() > expires){ localStorage.removeItem('lcc_session'); window.location.href='https://lcc.satslist.shop/static/login.html'; }
+  } catch(e){ window.location.href='https://lcc.satslist.shop/static/login.html'; }
+})();
+const API = 'https://lcc.satslist.shop/api/dashboard';
+function fmt(n){return Number(n).toLocaleString();}
+
+let currentPage = 1;
+const PAGE_SIZE = 25;
+let allEvents = [];
+
+function loadRouting(){
+  const days = document.getElementById('routing-period') ? document.getElementById('routing-period').value : 30;
+  fetch('https://lcc.satslist.shop/api/routing?days=' + days).then(r=>r.json()).then(r=>{
+    const price = parseFloat(document.getElementById('btc-price')?.textContent?.replace('$','').replace(',','')) || 65000;
+    document.getElementById('fees-30d').textContent = fmt(r.fees_30d_sats) + ' sats';
+    document.getElementById('fees-usd').textContent = '$' + ((r.fees_30d_sats/100000000)*price).toFixed(4);
+    document.getElementById('volume-30d').textContent = r.volume_30d_btc + ' BTC';
+    document.getElementById('events-30d').textContent = r.forwarding_events.length;
+    const avg = r.forwarding_events.length > 0 ? Math.round(r.fees_30d_sats / r.forwarding_events.length) : 0;
+    document.getElementById('avg-fee').textContent = avg + ' sats';
+    const label = days == 365 ? 'All time' : days == 1 ? 'Last 24 hours' : 'Last ' + days + ' days';
+    const shortLabel = days == 365 ? 'All' : days == 1 ? '24H' : days + 'D';
+    const el1 = document.getElementById('fees-earned-label');
+    const el2 = document.getElementById('volume-earned-label');
+    const el3 = document.getElementById('events-earned-label');
+    if(el1) el1.textContent = 'Fees Earned (' + shortLabel + ')';
+    if(el2) el2.textContent = 'Routed Volume (' + shortLabel + ')';
+    if(el3) el3.textContent = 'Total Events (' + shortLabel + ')';
+    document.getElementById('fees-label').textContent = fmt(r.fees_30d_sats) + ' sats (' + label + ')';
+    document.getElementById('volume-label').textContent = r.volume_30d_btc + ' BTC (' + label + ')';
+    const fwdContent = document.getElementById('fwd-content');
+    if(r.forwarding_events.length > 0){
+      const sortOrder = document.getElementById('routing-sort') ? document.getElementById('routing-sort').value : 'desc';
+      const nowTs = Math.floor(Date.now()/1000);
+      const cutoffTs = days == 365 ? 0 : nowTs - (days * 86400);
+      const filteredEvents = r.forwarding_events.filter(e => e.timestamp >= cutoffTs);
+      allEvents = sortOrder === 'desc' ? [...filteredEvents].reverse() : filteredEvents;
+      currentPage = 1;
+      renderPage();
+    }
+  });
+}
+
+  function renderPage() {
+  const start = (currentPage - 1) * PAGE_SIZE;
+    const pageEvents = allEvents.slice(start, start + PAGE_SIZE);
+    const totalPages = Math.ceil(allEvents.length / PAGE_SIZE);
+    let html = '<table class="fwd-table"><thead><tr><th>Time</th><th>Amount</th><th>Fee</th><th>In Channel</th><th>Out Channel</th></tr></thead><tbody>';
+    pageEvents.forEach(e=>{
+      html += '<tr><td>' + new Date(e.timestamp*1000).toLocaleString() + '</td><td>' + fmt(e.amt_out) + ' sats</td><td class="fee-earned">+' + fmt(e.fee) + ' sats</td><td style="color:var(--text)">' + (e.peer_alias_in && !e.peer_alias_in.includes('unable') ? e.peer_alias_in : e.chan_id_in||'?') + '</td><td style="color:var(--text)">' + (e.peer_alias_out && !e.peer_alias_out.includes('unable') ? e.peer_alias_out : e.chan_id_out||'?') + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    // Pagination controls
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--muted);">';
+    html += '<button onclick="changePage(-1)" ' + (currentPage===1?'disabled':'') + ' style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:4px 12px;border-radius:6px;cursor:pointer;font-size:11px;">← Prev</button>';
+    html += '<span>Page ' + currentPage + ' of ' + totalPages + ' &nbsp;·&nbsp; ' + allEvents.length + ' events</span>';
+    html += '<button onclick="changePage(1)" ' + (currentPage===totalPages?'disabled':'') + ' style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:4px 12px;border-radius:6px;cursor:pointer;font-size:11px;">Next →</button>';
+    html += '</div>';
+    document.getElementById('fwd-content').innerHTML = html;
+  }
+
+fetch(API).then(r=>r.json()).then(d=>{
+  const price = d.wallet.btc_price_usd;
+  const total = d.wallet.confirmed_balance + d.wallet.channel_balance;
+
+  document.getElementById('block-height').textContent = fmt(d.node.block_height);
+  document.getElementById('topbar-sats').textContent = fmt(total) + ' sats';
+  document.getElementById('topbar-usd').textContent = '~$' + ((total/100000000)*price).toFixed(2);
+  document.getElementById('btc-price').textContent = '$' + price.toLocaleString();
+  document.getElementById('mempool-size').textContent = d.mempool.size_mb + ' MB';
+  document.getElementById('fee-rate').textContent = d.mempool.fee_sat_vbyte + ' sat/vB';
+  document.getElementById('peer-count').textContent = d.node.num_peers + ' peers';
+  loadRouting();
+  // Load current fee policy
+  fetch('https://lcc.satslist.shop/api/feepolicy').then(r=>r.json()).then(d=>{
+    document.getElementById('current-base').textContent = d.base_fee_msat;
+    document.getElementById('current-ppm').textContent = d.fee_rate_ppm;
+  });
+
+  // Routing stats
+  const r = d.routing;
+  document.getElementById('fees-30d').textContent = fmt(r.fees_30d_sats) + ' sats';
+  document.getElementById('fees-usd').textContent = '$' + ((r.fees_30d_sats/100000000)*price).toFixed(4);
+  document.getElementById('volume-30d').textContent = r.volume_30d_btc + ' BTC';
+  document.getElementById('events-30d').textContent = r.forwarding_events.length;
+  const avg = r.forwarding_events.length > 0 ? Math.round(r.fees_30d_sats / r.forwarding_events.length) : 0;
+  document.getElementById('avg-fee').textContent = avg + ' sats';
+  document.getElementById('fees-label').textContent = fmt(r.fees_30d_sats) + ' sats (30D)';
+  document.getElementById('volume-label').textContent = r.volume_30d_btc + ' BTC (30D)';
+
+  // Charts
+  const labels = Array.from({length:30},(_,i)=>{
+    const dt = new Date(); dt.setDate(dt.getDate()-29+i);
+    return (dt.getMonth()+1)+'/'+dt.getDate();
+  });
+
+  new Chart(document.getElementById('feesChart').getContext('2d'),{
+    type:'bar',
+    data:{labels,datasets:[{data:r.daily_fees,backgroundColor:'rgba(247,147,26,0.7)',borderRadius:3,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#555',font:{size:9},maxTicksLimit:6},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#555',font:{size:9}},grid:{color:'rgba(255,255,255,0.04)'},beginAtZero:true}}}
+  });
+
+  new Chart(document.getElementById('volumeChart').getContext('2d'),{
+    type:'line',
+    data:{labels,datasets:[{data:r.daily_volume,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.08)',borderWidth:2,pointRadius:0,fill:true,tension:0.4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#555',font:{size:9},maxTicksLimit:6},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#555',font:{size:9}},grid:{color:'rgba(255,255,255,0.04)'},beginAtZero:true}}}
+  });
+
+});
+
+function updateFees(){
+  const base = document.getElementById('base-fee').value;
+  const ppm = document.getElementById('fee-rate-input').value;
+  const tld = document.getElementById('time-lock').value;
+  const rate = (parseInt(ppm)/1000000).toFixed(6);
+  const btn = document.querySelector('.btn.btn-orange');
+  const statusEl = document.getElementById('fee-update-status');
+  btn.disabled = true;
+  btn.textContent = '⏳ Updating...';
+  fetch('https://lcc.satslist.shop/api/updatefees?base_fee_msat='+base+'&fee_rate_ppm='+Math.round(parseFloat(rate)*1000000)+'&time_lock_delta='+tld, {method:'POST'})
+    .then(r=>r.json())
+    .then(d=>{
+      btn.disabled = false;
+      btn.textContent = 'Update All Channels';
+      if(statusEl) statusEl.innerHTML = '✅ ' + d.message;
+      if(statusEl) statusEl.style.color = 'var(--green)';
+    })
+    .catch(()=>{
+      btn.disabled = false;
+      btn.textContent = 'Update All Channels';
+      if(statusEl){ statusEl.textContent = '❌ Update failed'; statusEl.style.color = '#ef4444'; }
+    });
+}
+
+
+  function openDonateModal(){document.getElementById('donate-modal').classList.add('show');}
+  function closeDonateModal(){document.getElementById('donate-modal').classList.remove('show');}
+  function copyDonateAddress(){
+    navigator.clipboard.writeText('zap@satslist.shop').then(()=>{
+      const btn=document.querySelector('.donate-copy-btn');
+      btn.textContent='✅ Copied!';
+      btn.style.background='#22c55e';
+      setTimeout(()=>{btn.textContent='📋 Copy Lightning Address';btn.style.background='';},2000);
+    });
+  }
+
+  function changePage(dir) {
+    const totalPages = Math.ceil(allEvents.length / PAGE_SIZE);
+    currentPage = Math.max(1, Math.min(totalPages, currentPage + dir));
+    renderPage();
+  }
+
+  function updateTime(){document.getElementById('utc-time').textContent=new Date().toUTCString().split(' ').slice(1,5).join(' ');}
+updateTime();setInterval(updateTime,1000);
+</script>
+<div class="cmd-overlay" id="cmd-palette" onclick="if(event.target===this)closeCmd()">
+  <div class="cmd-box">
+    <div class="cmd-input-wrap">
+      <span>⚡</span>
+      <input class="cmd-input" id="cmd-input" placeholder="Type a command or page name..." autocomplete="off" />
+      <span style="font-size:11px;color:#444;">ESC to close</span>
+    </div>
+    <div class="cmd-results" id="cmd-results"></div>
+  </div>
+</div>
+<div class="donate-modal-overlay" id="donate-modal" onclick="if(event.target===this)closeDonateModal()">
+  <div class="donate-modal">
+    <button class="donate-modal-x" onclick="closeDonateModal()">&#10005;</button>
+    <h3>&#9889; Support LCC</h3>
+    <p>Scan with any Lightning wallet to donate</p>
+    <div class="donate-qr">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=184x184&data=lightning%3Azap%40satslist.shop&bgcolor=ffffff&color=000000&margin=0" alt="Lightning QR" />
+    </div>
+    <div class="donate-address">zap@satslist.shop</div>
+    <button class="donate-copy-btn" onclick="copyDonateAddress()">📋 Copy Lightning Address</button>
+    <button class="donate-close" onclick="closeDonateModal()">Close</button>
+  </div>
+</div>
+<script>
+const TIER_LABELS = {
+  community: '🟠 Community',
+  personal: '⚡ Personal',
+  pro: '🏢 Pro'
+};
+fetch('/api/tier').then(r=>r.json()).then(d=>{
+  window.LCC_TIER = d.tier;
+  const badge = document.getElementById('tier-badge');
+  if(badge) badge.textContent = TIER_LABELS[d.tier] || '🟠 Community';
+});
+</script>
+<script>
+const CMD_COMMANDS = [
+  // Navigation
+  {icon:'🏠', label:'Dashboard', hint:'Go to Dashboard', action:()=>location.href='https://lcc.satslist.shop/'},
+  {icon:'💳', label:'Wallet', hint:'Go to Wallet', action:()=>location.href='https://lcc.satslist.shop/static/wallet.html'},
+  {icon:'🔗', label:'Channels', hint:'Go to Channels', action:()=>location.href='https://lcc.satslist.shop/static/channels.html'},
+  {icon:'🔀', label:'Routing', hint:'Go to Routing', action:()=>location.href='https://lcc.satslist.shop/static/routing.html'},
+  {icon:'👥', label:'Peers', hint:'Go to Peers', action:()=>location.href='https://lcc.satslist.shop/static/peers.html'},
+  {icon:'📊', label:'Analytics', hint:'Go to Analytics', action:()=>location.href='https://lcc.satslist.shop/static/analytics.html'},
+  {icon:'🔔', label:'Alerts', hint:'Go to Alerts', action:()=>location.href='https://lcc.satslist.shop/static/alerts.html'},
+  {icon:'⛏️', label:'Mining', hint:'Go to Mining', action:()=>location.href='https://lcc.satslist.shop/static/mining.html'},
+  {icon:'💻', label:'System', hint:'Go to System', action:()=>location.href='https://lcc.satslist.shop/static/system.html'},
+  {icon:'⚙️', label:'Settings', hint:'Go to Settings', action:()=>location.href='https://lcc.satslist.shop/static/settings.html'},
+  {icon:'📓', label:'Journal', hint:'Go to Node Journal', action:()=>location.href='https://lcc.satslist.shop/static/journal.html'},
+  // Quick Actions
+  {icon:'📋', label:'Copy Pubkey', hint:'Copy your node pubkey to clipboard', action:()=>{
+    fetch('https://lcc.satslist.shop/api/node').then(r=>r.json()).then(d=>navigator.clipboard.writeText(d.pubkey).then(()=>alert('Pubkey copied!')));
+  }},
+  {icon:'🔀', label:'Rebalance Channels', hint:'Go to Alerts page to rebalance', action:()=>location.href='https://lcc.satslist.shop/static/alerts.html'},
+  {icon:'💰', label:'Update Fees', hint:'Go to Routing page to update channel fees', action:()=>location.href='https://lcc.satslist.shop/static/routing.html'},
+  {icon:'🐙', label:'GitHub', hint:'View LCC source code on GitHub', action:()=>window.open('https://github.com/lioranecho-cpu/lightning-control-center','_blank')},
+  {icon:'🛒', label:'SatsList', hint:'Open SatsList Bitcoin marketplace', action:()=>window.open('https://satslist.shop','_blank')},
+  {icon:'⚡', label:'Donate', hint:'Support LCC via Lightning — zap@satslist.shop', action:()=>openDonateModal()},
+
+  // Shortcuts reference
+  // Logout
+  {icon:'🚪', label:'Logout', hint:'Log out of LCC', action:()=>logout()},
+];
+let cmdActive = -1;
+function openCmd(){
+  const tier = window.LCC_TIER || 'community';
+  if(tier === 'community'){
+    alert('Command Palette is a Personal feature. Upgrade at satslist.shop');
+    return;
+  }
+  document.getElementById('cmd-palette').classList.add('show');
+  document.getElementById('cmd-input').value = '';
+  cmdActive = -1;
+  renderCmd('');
+  setTimeout(()=>document.getElementById('cmd-input').focus(), 50);
+}
+function closeCmd(){
+  document.getElementById('cmd-palette').classList.remove('show');
+  cmdActive = -1;
+}
+function renderCmd(query){
+  const results = document.getElementById('cmd-results');
+  const q = query.toLowerCase().trim();
+  const filtered = q ? CMD_COMMANDS.filter(c=>c.label.toLowerCase().includes(q)||c.hint.toLowerCase().includes(q)) : CMD_COMMANDS;
+  if(!filtered.length){
+    results.innerHTML = '<div class="cmd-empty">No results for "' + query + '"</div>';
+    return;
+  }
+  results.innerHTML = filtered.map((c,i)=>
+    '<div class="cmd-item' + (i===cmdActive?' active':'') + '" onclick="runCmd(' + CMD_COMMANDS.indexOf(c) + ')">' +
+    '<span class="cmd-icon">' + c.icon + '</span>' +
+    '<span class="cmd-label">' + c.label + '</span>' +
+    '<span class="cmd-hint">' + c.hint + '</span></div>'
+  ).join('');
+}
+function runCmd(idx){
+  CMD_COMMANDS[idx].action();
+  closeCmd();
+}
+document.addEventListener('keydown', e=>{
+  if(e.ctrlKey && e.key===' '){
+    e.preventDefault();
+    const pal = document.getElementById('cmd-palette');
+    if(pal.classList.contains('show')) closeCmd();
+    else openCmd();
+    return;
+  }
+  if(!document.getElementById('cmd-palette').classList.contains('show')) return;
+  const items = document.getElementById('cmd-results').querySelectorAll('.cmd-item');
+  if(e.key==='Escape') closeCmd();
+  if(e.key==='ArrowDown'){ e.preventDefault(); cmdActive=Math.min(cmdActive+1,items.length-1); items.forEach((el,i)=>el.classList.toggle('active',i===cmdActive)); }
+  if(e.key==='ArrowUp'){ e.preventDefault(); cmdActive=Math.max(cmdActive-1,0); items.forEach((el,i)=>el.classList.toggle('active',i===cmdActive)); }
+  if(e.key==='Enter' && cmdActive>=0) items[cmdActive].click();
+});
+document.addEventListener('DOMContentLoaded',()=>{
+  const input = document.getElementById('cmd-input');
+  if(input) input.addEventListener('input', e=>{ cmdActive=-1; renderCmd(e.target.value); });
+});
+</script>
+
+<script>
+function toggleSidebar(){
+  const tier = window.LCC_TIER || 'community';
+  if(tier === 'community'){
+    alert('Collapsing sidebar is a Personal feature. Upgrade at satslist.shop');
+    return;
+  }
+  const sidebar = document.querySelector('.sidebar');
+  const main = document.querySelector('.main-content') || document.querySelector('main') || document.querySelector('.content');
+  sidebar.classList.toggle('collapsed');
+  if(main) main.classList.toggle('expanded');
+  localStorage.setItem('lcc_sidebar', sidebar.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  const saved = localStorage.getItem('lcc_sidebar');
+  if(saved === 'collapsed'){
+    const tier = window.LCC_TIER || 'community';
+    if(tier !== 'community'){
+      const sidebar = document.querySelector('.sidebar');
+      const main = document.querySelector('.main-content') || document.querySelector('main') || document.querySelector('.content');
+      sidebar.classList.add('collapsed');
+      if(main) main.classList.add('expanded');
+    }
+  }
+});
+</script>
+
+<script>
+function exportRoutingCSV(){
+  const tier = window.LCC_TIER || 'community';
+  if(tier === 'community'){
+    alert('CSV Export is a Personal feature. Upgrade at satslist.shop');
+    return;
+  }
+  const rows = document.querySelectorAll('.fwd-table tr');
+  if(!rows.length){ alert('No data to export.'); return; }
+  const csv = Array.from(rows).map(row=>
+    Array.from(row.querySelectorAll('th,td')).map(cell=>'"'+cell.innerText.replace(/"/g,'""')+'"').join(',')
+  ).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'lcc_routing_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+</script>
+
+<script>
+function launchGame(){
+  const overlay = document.getElementById('satoshi-game');
+  if(overlay) { overlay.style.display='flex'; }
+  else { location.href='https://lcc.satslist.shop/dashboard'; }
+}
+</script>
+
+<script>
+if(typeof logout === 'undefined') function logout(){localStorage.removeItem('lcc_session');window.location.href='https://lcc.satslist.shop/static/login.html';}
+</script>
+
+
+
+
+<script>
+// Highlight active nav item based on current URL
+(function(){
+  const path = window.location.pathname + window.location.href;
+  const items = document.querySelectorAll('.nav-item');
+  items.forEach(item => {
+    const onclick = item.getAttribute('onclick') || '';
+    if(onclick.includes('dashboard') && (path.includes('dashboard') || path.endsWith('/'))) item.classList.add('active');
+    else if(onclick.includes('channels') && path.includes('channels')) item.classList.add('active');
+    else if(onclick.includes('peers') && path.includes('peers')) item.classList.add('active');
+    else if(onclick.includes('routing') && path.includes('routing')) item.classList.add('active');
+    else if(onclick.includes('wallet') && path.includes('wallet')) item.classList.add('active');
+    else if(onclick.includes('analytics') && path.includes('analytics')) item.classList.add('active');
+    else if(onclick.includes('alerts') && path.includes('alerts')) item.classList.add('active');
+    else if(onclick.includes('mining') && path.includes('mining')) item.classList.add('active');
+    else if(onclick.includes('system') && path.includes('system')) item.classList.add('active');
+    else if(onclick.includes('settings') && path.includes('settings')) item.classList.add('active');
+    else if(onclick.includes('journal') && path.includes('journal')) item.classList.add('active');
+  });
+})();
+</script>
+</body>
+</html>
