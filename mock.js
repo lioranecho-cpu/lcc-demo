@@ -361,6 +361,13 @@ window.fetch = async function(url, options = {}) {
     return jsonResponse({ tier: 'pro' });
   }
 
+  if (path === '/api/dashboard') return jsonResponse({
+    node: MOCK_NODE,
+    wallet: MOCK_WALLET,
+    channels: MOCK_CHANNELS,
+    routing: MOCK_ROUTING,
+    mempool: MOCK_MEMPOOL
+  });
   if (path === '/api/node') return jsonResponse(MOCK_NODE);
   if (path === '/api/wallet') return jsonResponse(MOCK_WALLET);
   if (path === '/api/channels') return jsonResponse(MOCK_CHANNELS);
