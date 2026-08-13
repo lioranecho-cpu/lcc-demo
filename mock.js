@@ -365,9 +365,22 @@ window.fetch = async function(url, options = {}) {
   if (path === '/api/dashboard') return jsonResponse({
     node: MOCK_NODE,
     wallet: MOCK_WALLET,
-    channels: MOCK_CHANNELS,
     routing: MOCK_ROUTING,
-    mempool: MOCK_MEMPOOL
+    mempool: MOCK_MEMPOOL,
+    channels: {
+      total_capacity: 22305539,
+      num_active: 12,
+      list: MOCK_CHANNELS.channels.map(ch => ({
+        peer_alias: ch.peer_alias,
+        capacity: parseInt(ch.capacity),
+        local_balance: parseInt(ch.local_balance),
+        remote_balance: parseInt(ch.remote_balance),
+        fee_ppm: ch.peer_alias.includes('LNBiG') ? 150 : ch.peer_alias.includes('block') ? 50 : 100,
+        status: 'active'
+      }))
+    },
+    fees_30d_sats: 2847,
+    fees_alltime_sats: 4120
   });
   if (path === '/api/node') return jsonResponse(MOCK_NODE);
   if (path === '/api/wallet') return jsonResponse(MOCK_WALLET);
