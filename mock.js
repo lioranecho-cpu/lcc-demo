@@ -345,7 +345,8 @@ const _originalFetch = window.fetch.bind(window);
 
 window.fetch = async function(url, options = {}) {
   const u = typeof url === 'string' ? url : url.toString();
-  const path = u.replace(/https?:\/\/[^/]+/, '').replace('/static', '').split('?')[0];
+  let path = u.replace(/https?:\/\/[^/]+/, '').replace('/static', '').split('?')[0];
+  if (!path.startsWith('/')) path = '/' + path;
   const params = new URLSearchParams(u.includes('?') ? u.split('?')[1] : '');
 
   // Auth — always succeed in demo
