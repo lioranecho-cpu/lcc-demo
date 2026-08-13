@@ -430,3 +430,8 @@ localStorage.setItem('lcc_tier', 'pro');
 localStorage.setItem('lcc_demo_mode', 'true');
 
 console.log('🎮 LCC Demo Mode active — all data is simulated');
+
+// Clear any real LCC session to prevent redirect to live node
+localStorage.removeItem('lcc_session');
+localStorage.removeItem('lcc_token');
+sessionStorage.clear();

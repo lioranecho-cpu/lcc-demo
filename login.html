@@ -151,7 +151,7 @@
       try {
         const { expires } = JSON.parse(session);
         if(Date.now() < expires) {
-          window.location.href = 'https://lcc.satslist.shop/dashboard';
+          window.location.href = 'index.html';
           return true;
         }
       } catch(e) {}
@@ -169,7 +169,7 @@
     }));
     document.getElementById('success-msg').classList.add('show');
     setTimeout(() => {
-      window.location.href = 'https://lcc.satslist.shop/dashboard';
+      window.location.href = 'index.html';
     }, 1000);
   }
 
@@ -212,7 +212,7 @@
     // Derive pubkey from nsec using nostr-tools if available
     // For now verify against stored node nsec
     try {
-      const resp = await fetch('https://lcc.satslist.shop/api/nostr/verify-nsec', {
+      const resp = await fetch('api/nostr/verify-nsec', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({nsec})
@@ -241,7 +241,7 @@
     spinner.classList.add('show');
     btnText.textContent = 'Verifying...';
     errorMsg.classList.remove('show');
-    fetch('https://lcc.satslist.shop/api/auth/verify-password', {
+    fetch('api/auth/verify-password', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({password: pw})
