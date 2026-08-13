@@ -435,3 +435,8 @@ console.log('🎮 LCC Demo Mode active — all data is simulated');
 localStorage.removeItem('lcc_session');
 localStorage.removeItem('lcc_token');
 sessionStorage.clear();
+
+// Set demo session immediately so session checks pass
+const demoSession = JSON.stringify({ expires: Date.now() + 86400000, demo: true });
+localStorage.setItem('lcc_session', demoSession);
+localStorage.setItem('lcc_tier', 'pro');
