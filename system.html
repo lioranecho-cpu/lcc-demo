@@ -172,7 +172,7 @@
   .sidebar.collapsed ~ .main-content{margin-left:60px;}
 
 </style>
-  <script src="/static/lcc-theme.js?v=3"></script>
+  <script src="./lcc-theme.js?v=3"></script>
 
 
 </head>
@@ -183,25 +183,25 @@
   <div style="text-align:center;padding:6px 0;border-bottom:1px solid var(--border);"><button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">&#9776;</button></div>
   <nav class="nav">
         <div class="nav-section">Node</div>
-    <div class="nav-item" onclick="location.href='dashboard'"><span class="icon">&#127968;</span><span class="nav-label"> Dashboard</span></div>
-    <div class="nav-item" onclick="location.href='static/channels.html'"><span class="icon">&#9889;</span><span class="nav-label"> Channels</span></div>
-    <div class="nav-item" onclick="location.href='static/peers.html'"><span class="icon">&#128101;</span><span class="nav-label"> Peers</span></div>
-    <div class="nav-item" onclick="location.href='static/routing.html'"><span class="icon">&#128256;</span><span class="nav-label"> Routing</span></div>
-    <div class="nav-item" onclick="location.href='static/wallet.html'"><span class="icon">&#128091;</span><span class="nav-label"> Wallet</span></div>
+    <div class="nav-item" onclick="location.href='index.html'"><span class="icon">&#127968;</span><span class="nav-label"> Dashboard</span></div>
+    <div class="nav-item" onclick="location.href='channels.html'"><span class="icon">&#9889;</span><span class="nav-label"> Channels</span></div>
+    <div class="nav-item" onclick="location.href='peers.html'"><span class="icon">&#128101;</span><span class="nav-label"> Peers</span></div>
+    <div class="nav-item" onclick="location.href='routing.html'"><span class="icon">&#128256;</span><span class="nav-label"> Routing</span></div>
+    <div class="nav-item" onclick="location.href='wallet.html'"><span class="icon">&#128091;</span><span class="nav-label"> Wallet</span></div>
     <div class="nav-section">Tools</div>
     <div class="nav-item" onclick="openCmd()"><span class="icon">&#9211;</span><span class="nav-label"> Palette </span><span style="font-size:10px;color:#555;margin-left:auto;">Ctrl+Space</span></div>
-    <div class="nav-item" onclick="location.href='static/analytics.html'"><span class="icon">&#128202;</span><span class="nav-label"> Analytics</span></div>
-    <div class="nav-item" onclick="location.href='static/journal.html'"><span class="icon">&#128221;</span><span class="nav-label"> Node Journal</span></div>
-    <div class="nav-item" onclick="location.href='static/alerts.html'"><span class="icon">&#128276;</span><span class="nav-label"> Alerts</span></div>
-    <div class="nav-item" onclick="location.href='static/treasury.html'"><span class="icon">&#128176;</span><span class="nav-label"> Treasury</span></div>
+    <div class="nav-item" onclick="location.href='analytics.html'"><span class="icon">&#128202;</span><span class="nav-label"> Analytics</span></div>
+    <div class="nav-item" onclick="location.href='journal.html'"><span class="icon">&#128221;</span><span class="nav-label"> Node Journal</span></div>
+    <div class="nav-item" onclick="location.href='alerts.html'"><span class="icon">&#128276;</span><span class="nav-label"> Alerts</span></div>
+    <div class="nav-item" onclick="location.href='treasury.html'"><span class="icon">&#128176;</span><span class="nav-label"> Treasury</span></div>
     <div class="nav-item" onclick="window.open('http://192.168.4.76:8001','LiveStream','width=1000,height=650,menubar=no,toolbar=no,location=no')" style="color:var(--green);"><span class="icon">📡</span><span class="nav-label"> Live Stream</span></div>
-    <div class="nav-item" onclick="location.href='static/nwc.html'"><span class="icon">⚡</span><span class="nav-label"> NWC <span style='font-size:9px;background:var(--orange-dim);border:1px solid var(--orange);color:var(--orange);padding:1px 5px;border-radius:10px;margin-left:4px;'>PRO</span></span></div>
+    <div class="nav-item" onclick="location.href='nwc.html'"><span class="icon">⚡</span><span class="nav-label"> NWC <span style='font-size:9px;background:var(--orange-dim);border:1px solid var(--orange);color:var(--orange);padding:1px 5px;border-radius:10px;margin-left:4px;'>PRO</span></span></div>
     <div class="nav-section">System</div>
-    <div class="nav-item" onclick="location.href='static/mining.html'"><span class="icon">&#9935;</span><span class="nav-label"> Mining</span></div>
-    <div class="nav-item" onclick="location.href='static/system.html'"><span class="icon">&#128421;</span><span class="nav-label"> System</span></div>
-    <div class="nav-item" onclick="location.href='static/integrations.html'"><span class="icon">&#128279;</span><span class="nav-label"> Integrations</span></div>
+    <div class="nav-item" onclick="location.href='mining.html'"><span class="icon">&#9935;</span><span class="nav-label"> Mining</span></div>
+    <div class="nav-item" onclick="location.href='system.html'"><span class="icon">&#128421;</span><span class="nav-label"> System</span></div>
+    <div class="nav-item" onclick="location.href='integrations.html'"><span class="icon">&#128279;</span><span class="nav-label"> Integrations</span></div>
     <div class="nav-item" onclick="window.open('https://satslist.shop','_blank')"><span class="icon">&#128279;</span><span class="nav-label"> SatsList</span></div>
-    <div class="nav-item" onclick="location.href='static/settings.html'"><span class="icon">&#9881;</span><span class="nav-label"> Settings</span></div>
+    <div class="nav-item" onclick="location.href='settings.html'"><span class="icon">&#9881;</span><span class="nav-label"> Settings</span></div>
   </nav>
   <div class="sidebar-footer">
     <div class="version-badge">LCC v0.1.2</div>
@@ -324,11 +324,11 @@
 // Session check
 (function(){
   const s = localStorage.getItem('lcc_session');
-  if(!s){ window.location.href='static/login.html'; return; }
+  if(!s){ window.location.href='login.html'; return; }
   try{
     const {expires} = JSON.parse(s);
-    if(Date.now() > expires){ localStorage.removeItem('lcc_session'); window.location.href='static/login.html'; }
-  } catch(e){ window.location.href='static/login.html'; }
+    if(Date.now() > expires){ localStorage.removeItem('lcc_session'); window.location.href='login.html'; }
+  } catch(e){ window.location.href='login.html'; }
 })();
 const API = 'api/dashboard';
 const SYS_API = 'api/system';
@@ -421,11 +421,11 @@ function loadSystem() {
 loadSystem();
 setInterval(loadSystem, 30000); // Refresh every 30 seconds
 
-function checkSession(){const s=localStorage.getItem('lcc_session');if(!s){window.location.href='static/login.html';return;}try{const{expires}=JSON.parse(s);if(Date.now()>expires){localStorage.removeItem('lcc_session');window.location.href='static/login.html';}}catch(e){window.location.href='static/login.html';}}
+function checkSession(){const s=localStorage.getItem('lcc_session');if(!s){window.location.href='login.html';return;}try{const{expires}=JSON.parse(s);if(Date.now()>expires){localStorage.removeItem('lcc_session');window.location.href='login.html';}}catch(e){window.location.href='login.html';}}
 checkSession();
 setInterval(checkSession,5*60*1000);
 
-function logout(){localStorage.removeItem('lcc_session');window.location.href='static/login.html';}
+function logout(){localStorage.removeItem('lcc_session');window.location.href='login.html';}
 
   function openDonateModal(){document.getElementById('donate-modal').classList.add('show');}
   function closeDonateModal(){document.getElementById('donate-modal').classList.remove('show');}
@@ -480,22 +480,22 @@ fetch('/api/tier').then(r=>r.json()).then(d=>{
 const CMD_COMMANDS = [
   // Navigation
   {icon:'🏠', label:'Dashboard', hint:'Go to Dashboard', action:()=>location.href=''},
-  {icon:'💳', label:'Wallet', hint:'Go to Wallet', action:()=>location.href='static/wallet.html'},
-  {icon:'🔗', label:'Channels', hint:'Go to Channels', action:()=>location.href='static/channels.html'},
-  {icon:'🔀', label:'Routing', hint:'Go to Routing', action:()=>location.href='static/routing.html'},
-  {icon:'👥', label:'Peers', hint:'Go to Peers', action:()=>location.href='static/peers.html'},
-  {icon:'📊', label:'Analytics', hint:'Go to Analytics', action:()=>location.href='static/analytics.html'},
-  {icon:'🔔', label:'Alerts', hint:'Go to Alerts', action:()=>location.href='static/alerts.html'},
-  {icon:'⛏️', label:'Mining', hint:'Go to Mining', action:()=>location.href='static/mining.html'},
-  {icon:'💻', label:'System', hint:'Go to System', action:()=>location.href='static/system.html'},
-  {icon:'⚙️', label:'Settings', hint:'Go to Settings', action:()=>location.href='static/settings.html'},
-  {icon:'📓', label:'Journal', hint:'Go to Node Journal', action:()=>location.href='static/journal.html'},
+  {icon:'💳', label:'Wallet', hint:'Go to Wallet', action:()=>location.href='wallet.html'},
+  {icon:'🔗', label:'Channels', hint:'Go to Channels', action:()=>location.href='channels.html'},
+  {icon:'🔀', label:'Routing', hint:'Go to Routing', action:()=>location.href='routing.html'},
+  {icon:'👥', label:'Peers', hint:'Go to Peers', action:()=>location.href='peers.html'},
+  {icon:'📊', label:'Analytics', hint:'Go to Analytics', action:()=>location.href='analytics.html'},
+  {icon:'🔔', label:'Alerts', hint:'Go to Alerts', action:()=>location.href='alerts.html'},
+  {icon:'⛏️', label:'Mining', hint:'Go to Mining', action:()=>location.href='mining.html'},
+  {icon:'💻', label:'System', hint:'Go to System', action:()=>location.href='system.html'},
+  {icon:'⚙️', label:'Settings', hint:'Go to Settings', action:()=>location.href='settings.html'},
+  {icon:'📓', label:'Journal', hint:'Go to Node Journal', action:()=>location.href='journal.html'},
   // Quick Actions
   {icon:'📋', label:'Copy Pubkey', hint:'Copy your node pubkey to clipboard', action:()=>{
     fetch('api/node').then(r=>r.json()).then(d=>navigator.clipboard.writeText(d.pubkey).then(()=>alert('Pubkey copied!')));
   }},
-  {icon:'🔀', label:'Rebalance Channels', hint:'Go to Alerts page to rebalance', action:()=>location.href='static/alerts.html'},
-  {icon:'💰', label:'Update Fees', hint:'Go to Routing page to update channel fees', action:()=>location.href='static/routing.html'},
+  {icon:'🔀', label:'Rebalance Channels', hint:'Go to Alerts page to rebalance', action:()=>location.href='alerts.html'},
+  {icon:'💰', label:'Update Fees', hint:'Go to Routing page to update channel fees', action:()=>location.href='routing.html'},
   {icon:'🐙', label:'GitHub', hint:'View LCC source code on GitHub', action:()=>window.open('https://github.com/lioranecho-cpu/lightning-control-center','_blank')},
   {icon:'🛒', label:'SatsList', hint:'Open SatsList Bitcoin marketplace', action:()=>window.open('https://satslist.shop','_blank')},
   {icon:'⚡', label:'Donate', hint:'Support LCC via Lightning — zap@satslist.shop', action:()=>openDonateModal()},
@@ -593,7 +593,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 function launchGame(){
   const overlay = document.getElementById('satoshi-game');
   if(overlay) { overlay.style.display='flex'; }
-  else { location.href='dashboard'; }
+  else { location.href='index.html'; }
 }
 </script>
 

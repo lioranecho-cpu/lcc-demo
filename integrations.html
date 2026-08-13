@@ -29,7 +29,7 @@
     .content{padding:24px;flex:1;display:flex;justify-content:center;}
     svg text{font-family:'Inter',system-ui,sans-serif;}
   </style>
-  <script src="/static/lcc-theme.js?v=3"></script>
+  <script src="./lcc-theme.js?v=3"></script>
 
 
 </head>
@@ -39,24 +39,24 @@
   <div style="text-align:center;padding:6px 0;border-bottom:1px solid var(--border);"><button onclick="toggleSidebar()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;">☰</button></div>
   <nav class="nav">
     <div class="nav-section">Node</div>
-    <div class="nav-item" onclick="location.href='dashboard'"><span>🏠</span> Dashboard</div>
-    <div class="nav-item" onclick="location.href='static/channels.html'"><span>⚡</span> Channels</div>
-    <div class="nav-item" onclick="location.href='static/peers.html'"><span>👥</span> Peers</div>
-    <div class="nav-item" onclick="location.href='static/routing.html'"><span>🔀</span> Routing</div>
-    <div class="nav-item" onclick="location.href='static/wallet.html'"><span>👛</span> Wallet</div>
+    <div class="nav-item" onclick="location.href='index.html'"><span>🏠</span> Dashboard</div>
+    <div class="nav-item" onclick="location.href='channels.html'"><span>⚡</span> Channels</div>
+    <div class="nav-item" onclick="location.href='peers.html'"><span>👥</span> Peers</div>
+    <div class="nav-item" onclick="location.href='routing.html'"><span>🔀</span> Routing</div>
+    <div class="nav-item" onclick="location.href='wallet.html'"><span>👛</span> Wallet</div>
     <div class="nav-section">Tools</div>
-    <div class="nav-item" onclick="location.href='static/analytics.html'"><span>📊</span> Analytics</div>
-    <div class="nav-item" onclick="location.href='static/journal.html'"><span>📓</span> Node Journal</div>
-    <div class="nav-item" onclick="location.href='static/alerts.html'"><span>🔔</span> Alerts</div>
-    <div class="nav-item" onclick="location.href='static/treasury.html'"><span>💰</span> Treasury</div>
+    <div class="nav-item" onclick="location.href='analytics.html'"><span>📊</span> Analytics</div>
+    <div class="nav-item" onclick="location.href='journal.html'"><span>📓</span> Node Journal</div>
+    <div class="nav-item" onclick="location.href='alerts.html'"><span>🔔</span> Alerts</div>
+    <div class="nav-item" onclick="location.href='treasury.html'"><span>💰</span> Treasury</div>
     <div class="nav-item" onclick="window.open('http://192.168.4.76:8001','LiveStream','width=1000,height=650,menubar=no,toolbar=no,location=no')" style="color:var(--green);"><span class="icon">📡</span><span class="nav-label"> Live Stream</span></div>
-    <div class="nav-item" onclick="location.href='static/nwc.html'"><span>⚡</span> NWC <span style='font-size:9px;background:rgba(247,147,26,.12);border:1px solid rgba(247,147,26,.3);color:#f7931a;padding:1px 5px;border-radius:10px;margin-left:4px;'>PRO</span></div>
+    <div class="nav-item" onclick="location.href='nwc.html'"><span>⚡</span> NWC <span style='font-size:9px;background:rgba(247,147,26,.12);border:1px solid rgba(247,147,26,.3);color:#f7931a;padding:1px 5px;border-radius:10px;margin-left:4px;'>PRO</span></div>
     <div class="nav-section">System</div>
-    <div class="nav-item" onclick="location.href='static/mining.html'"><span>⛏️</span> Mining</div>
-    <div class="nav-item" onclick="location.href='static/system.html'"><span>💻</span> System</div>
+    <div class="nav-item" onclick="location.href='mining.html'"><span>⛏️</span> Mining</div>
+    <div class="nav-item" onclick="location.href='system.html'"><span>💻</span> System</div>
     <div class="nav-item active"><span>🔗</span> Integrations</div>
     <div class="nav-item" onclick="window.open('https://satslist.shop','_blank')"><span>🛒</span> SatsList</div>
-    <div class="nav-item" onclick="location.href='static/settings.html'"><span>⚙️</span> Settings</div>
+    <div class="nav-item" onclick="location.href='settings.html'"><span>⚙️</span> Settings</div>
   </nav>
   <div class="sidebar-footer">
     <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">LCC v0.1.2</div>
@@ -251,11 +251,11 @@ fetch('/api/tier').then(r=>r.json()).then(d=>{
 // Session check
 (function(){
   const s = localStorage.getItem('lcc_session');
-  if(!s){ window.location.href='static/login.html'; return; }
+  if(!s){ window.location.href='login.html'; return; }
   try{
     const {expires} = JSON.parse(s);
-    if(Date.now() > expires){ localStorage.removeItem('lcc_session'); window.location.href='static/login.html'; }
-  } catch(e){ window.location.href='static/login.html'; }
+    if(Date.now() > expires){ localStorage.removeItem('lcc_session'); window.location.href='login.html'; }
+  } catch(e){ window.location.href='login.html'; }
 })();</script>
 </body>
 </html>
