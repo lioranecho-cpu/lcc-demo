@@ -461,3 +461,11 @@ sessionStorage.clear();
 const demoSession = JSON.stringify({ expires: Date.now() + 86400000, demo: true });
 localStorage.setItem('lcc_session', demoSession);
 localStorage.setItem('lcc_tier', 'pro');
+
+// Add demo banner to page
+window.addEventListener('DOMContentLoaded', () => {
+  const banner = document.createElement('div');
+  banner.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#F7931A;color:#000;padding:8px 20px;border-radius:20px;font-size:12px;font-weight:700;z-index:99999;pointer-events:none;';
+  banner.textContent = '🎮 DEMO MODE — Read only. Install LCC on your node to unlock all features.';
+  document.body.appendChild(banner);
+});
