@@ -1,1 +1,1 @@
-{"alias": "prodeskltn-demo", "pubkey": "03ee97ebe8b3e50c6272c3b33c7d730ad6722016ecb2d5fbfe9b0b7595383307d1", "synced_to_chain": true, "block_height": 962046, "num_active_channels": 12, "num_peers": 12, "version": "0.21.1-beta", "color": "#F7931A"}
+{"alias": "demo-node", "pubkey": "03a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2", "synced_to_chain": true, "block_height": 962046, "num_active_channels": 12, "num_peers": 12, "version": "0.21.1-beta", "color": "#F7931A"}

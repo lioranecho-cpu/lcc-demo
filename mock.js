@@ -3,14 +3,14 @@
 // No real node required — this is a read-only demo
 
 const MOCK_NODE = {
-  alias: "prodeskltn-demo",
-  pubkey: "03ee97ebe8b3e50c6272c3b33c7d730ad6722016ecb2d5fbfe9b0b7595383307d1",
+  alias: "demo-node",
+  pubkey: "03a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2",
   version: "0.21.1-beta",
   synced_to_chain: true,
   block_height: 962046,
   num_active_channels: 12,
   num_peers: 12,
-  uris: ["03ee97ebe8b3e50c6272c3b33c7d730ad6722016ecb2d5fbfe9b0b7595383307d1@demo.lcc.satslist.shop:9735"],
+  uris: ["03a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2@demo.demo.example.com:9735"],
   color: "#F7931A"
 };
 
@@ -280,9 +280,9 @@ const MOCK_MEMPOOL = {
 
 const MOCK_MINING = {
   miners: [
-    { name: "BitAxe Gamma", hashrate: "1.4 TH/s", power: "22W", ip: "192.168.4.21", temp: "62°C", status: "mining" },
-    { name: "Avalon Nano3", hashrate: "2.9 TH/s", power: "89W", ip: "192.168.4.23", temp: "71°C", status: "mining" },
-    { name: "NerdQAxe++ Rev 6.1", hashrate: "6.1 TH/s", power: "115W", ip: "192.168.4.20", temp: "68°C", status: "mining" }
+    { name: "BitAxe Gamma", hashrate: "1.4 TH/s", power: "22W", ip: "192.168.1.21", temp: "62°C", status: "mining" },
+    { name: "Avalon Nano3", hashrate: "2.9 TH/s", power: "89W", ip: "192.168.1.23", temp: "71°C", status: "mining" },
+    { name: "NerdQAxe++ Rev 6.1", hashrate: "6.1 TH/s", power: "115W", ip: "192.168.1.20", temp: "68°C", status: "mining" }
   ],
   total_hashrate: "10.4 TH/s",
   pool: "public-pool.io",

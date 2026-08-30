@@ -217,7 +217,7 @@
     <div class="nav-item" onclick="location.href='journal.html'"><span class="icon">&#128221;</span><span class="nav-label"> Node Journal</span></div>
     <div class="nav-item" onclick="location.href='alerts.html'"><span class="icon">&#128276;</span><span class="nav-label"> Alerts</span></div>
     <div class="nav-item" onclick="location.href='treasury.html'"><span class="icon">&#128176;</span><span class="nav-label"> Treasury</span></div>
-    <div class="nav-item" onclick="window.open('http://192.168.4.76:8001','LiveStream','width=1000,height=650,menubar=no,toolbar=no,location=no')" style="color:var(--green);"><span class="icon">📡</span><span class="nav-label"> Live Stream</span></div>
+    <div class="nav-item" onclick="window.open('http://192.168.1.100:8001','LiveStream','width=1000,height=650,menubar=no,toolbar=no,location=no')" style="color:var(--green);"><span class="icon">📡</span><span class="nav-label"> Live Stream</span></div>
     <div class="nav-item" onclick="location.href='nwc.html'"><span class="icon">⚡</span><span class="nav-label"> NWC <span style='font-size:9px;background:var(--orange-dim);border:1px solid var(--orange);color:var(--orange);padding:1px 5px;border-radius:10px;margin-left:4px;'>PRO</span></span></div>
     <div class="nav-section">System</div>
     <div class="nav-item" onclick="location.href='mining.html'"><span class="icon">&#9935;</span><span class="nav-label"> Mining</span></div>
@@ -511,7 +511,7 @@ function showTab(btn, tab) {
   function openDonateModal(){document.getElementById('donate-modal').classList.add('show');}
   function closeDonateModal(){document.getElementById('donate-modal').classList.remove('show');}
   function copyDonateAddress(){
-    navigator.clipboard.writeText('zap@satslist.shop').then(()=>{
+    navigator.clipboard.writeText('demo@example.com').then(()=>{
       const btn=document.querySelector('.donate-copy-btn');
       btn.textContent='✅ Copied!';
       btn.style.background='#22c55e';
@@ -540,7 +540,7 @@ updateTime();setInterval(updateTime,1000);
     <div class="donate-qr">
       <img src="https://api.qrserver.com/v1/create-qr-code/?size=184x184&data=lightning%3Azap%40satslist.shop&bgcolor=ffffff&color=000000&margin=0" alt="Lightning QR" />
     </div>
-    <div class="donate-address">zap@satslist.shop</div>
+    <div class="donate-address">demo@example.com</div>
     <button class="donate-copy-btn" onclick="copyDonateAddress()">📋 Copy Lightning Address</button>
     <button class="donate-close" onclick="closeDonateModal()">Close</button>
   </div>
@@ -579,7 +579,7 @@ const CMD_COMMANDS = [
   {icon:'💰', label:'Update Fees', hint:'Go to Routing page to update channel fees', action:()=>location.href='routing.html'},
   {icon:'🐙', label:'GitHub', hint:'View LCC source code on GitHub', action:()=>window.open('https://github.com/lioranecho-cpu/lightning-control-center','_blank')},
   {icon:'🛒', label:'SatsList', hint:'Open SatsList Bitcoin marketplace', action:()=>window.open('https://satslist.shop','_blank')},
-  {icon:'⚡', label:'Donate', hint:'Support LCC via Lightning — zap@satslist.shop', action:()=>openDonateModal()},
+  {icon:'⚡', label:'Donate', hint:'Support LCC via Lightning — demo@example.com', action:()=>openDonateModal()},
 
   // Shortcuts reference
   // Logout
@@ -891,7 +891,7 @@ function showPeerPolicy(scid, alias) {
     .then(data=>{
       const p1 = data.node1_policy || {};
       const p2 = data.node2_policy || {};
-      const myPubkey = '03ee97ebe8b3e50c6272c3b33c7d730ad6722016ecb2d5fbfe9b0b7595383307d1';
+      const myPubkey = '03a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2';
       const myPolicy = data.node1_pub === myPubkey ? p1 : p2;
       const theirPolicy = data.node1_pub === myPubkey ? p2 : p1;
       const peerMsg = 

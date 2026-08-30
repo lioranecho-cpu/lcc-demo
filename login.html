@@ -126,7 +126,7 @@
     <div class="divider">node identity</div>
     <div class="node-info">
       <div class="node-dot"></div>
-      <div><span class="node-alias">prodeskltn-node</span> &mdash; <span>lcc.satslist.shop</span></div>
+      <div><span class="node-alias">demo-node</span> &mdash; <span>demo.example.com</span></div>
     </div>
   </div>
   <div class="login-footer">
@@ -165,7 +165,7 @@
   function grantAccess(method) {
     localStorage.setItem(SESSION_KEY, JSON.stringify({
       expires: Date.now() + SESSION_DURATION,
-      node: 'prodeskltn-node',
+      node: 'demo-node',
       method: method
     }));
     document.getElementById('success-msg').classList.add('show');
