@@ -434,6 +434,42 @@ window.fetch = async function(url, options = {}) {
   if (path === '/api/estimatefee') return jsonResponse({ sat_per_vb: 1 });
   if (path.startsWith('/api/chaninfo')) return jsonResponse({ node1_pub: '', node2_pub: '' });
 
+
+  // Loop endpoints
+  if (path === '/api/loop/monitor') return jsonResponse({
+    swaps: [
+      {id: "a1b2c3d4e5f6", type: "LOOP_OUT", amount: 1000000, state: "SUCCESS", cost_server: 1052, cost_onchain: 113, cost_offchain: 2499, total_cost: 3664, channel: "ACINQ", time: "08/29/2026 09:15 AM"},
+      {id: "b2c3d4e5f6a7", type: "LOOP_OUT", amount: 500000, state: "SUCCESS", cost_server: 543, cost_onchain: 113, cost_offchain: 1275, total_cost: 1931, channel: "block-iad-1", time: "08/28/2026 03:22 PM"},
+      {id: "c3d4e5f6a7b8", type: "LOOP_OUT", amount: 300000, state: "SUCCESS", cost_server: 344, cost_onchain: 76, cost_offchain: 901, total_cost: 1321, channel: "JiriBear", time: "08/28/2026 11:45 AM"},
+      {id: "d4e5f6a7b8c9", type: "LOOP_OUT", amount: 500000, state: "FAILED", cost_server: 0, cost_onchain: 0, cost_offchain: 0, total_cost: 0, channel: "Wrath Of Wolves", time: "08/27/2026 07:19 AM"},
+      {id: "e5f6a7b8c9d0", type: "LOOP_OUT", amount: 250000, state: "SUCCESS", cost_server: 330, cost_onchain: 113, cost_offchain: 624, total_cost: 1067, channel: "Unwetter", time: "08/26/2026 04:26 PM"}
+    ]
+  });
+  if (path === '/api/loop/quote') return jsonResponse({send_sats: 500000, receive_sats: 499264, total_fee: 736});
+  if (path === '/api/loop/out') return jsonResponse({success: true, swap_id: "f6a7b8c9d0e1"});
+
+  // System endpoint
+  if (path === '/api/system') return jsonResponse({
+    cpu_percent: 12.4, cpu_cores: 4, ram_percent: 28.2,
+    ram_used_gb: 4.2, ram_total_gb: 15.0,
+    bitcoin_disk_percent: 48.0, bitcoin_disk_used: "833 GB", bitcoin_disk_total: "1833 GB",
+    root_disk_percent: 13.0, uptime: "12d 8h 45m",
+    hostname: "demo-node-server", os: "Linux 6.8.0", kernel: "6.8.0-generic", arch: "x86_64",
+    services: [
+      {name: "Bitcoin Core", desc: "Full Bitcoin node", active: true},
+      {name: "LND / litd", desc: "Lightning Network Daemon", active: true},
+      {name: "RTL", desc: "Ride The Lightning web UI", active: true},
+      {name: "LNbits", desc: "Lightning wallet platform", active: true},
+      {name: "Cloudflare Tunnel", desc: "Secure remote access", active: true},
+      {name: "LCC", desc: "Lightning Control Center", active: true},
+      {name: "Tor", desc: "Anonymous routing", active: true},
+      {name: "Caddy", desc: "Reverse proxy", active: true}
+    ]
+  });
+
+  // Channel strategies
+  if (path === '/api/channel-strategies') return jsonResponse({strategies: {}});
+
   // Fallback — try real fetch (for static assets)
   return _originalFetch(url, options);
 };
