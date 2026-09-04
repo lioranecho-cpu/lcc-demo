@@ -281,6 +281,7 @@
 
     <!-- Tabs -->
     <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+      <button onclick="alert('🎮 Demo mode — Targeted Rebalance disabled. Install LCC on your node to use this feature.')" style="background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);color:var(--green);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-family:var(--font);font-weight:600;margin-right:8px;">🎯 Targeted Rebalance</button>
       <button onclick="rebalanceNow()" id="rebalance-btn" style="background:rgba(247,147,26,.12);border:1px solid var(--orange-dim);color:var(--orange);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-family:var(--font);font-weight:600;">⚖️ Rebalance All Channels</button>
       <span id="rebalance-status" style="margin-left:12px;font-size:11px;color:var(--muted);align-self:center;"></span>
     </div>
@@ -813,6 +814,7 @@ function sortChannels() {
       '<div class="ch-actions">' +
       '<button class="action-btn" onclick="openFeeModal(\'' + ch.channel_point + '\',\'' + ch.peer_alias + '\',' + ch.fee_ppm + ',' + ch.base_fee + ')">Update Fees</button>' +
       '<button class="action-btn" onclick="rebalanceChannel(\'' + ch.remote_pubkey + '\',\'' + ch.peer_alias + '\')">Rebalance</button>' +
+      '<button class="action-btn" onclick="alert(\'🎮 Demo mode — Loop Out disabled. Install LCC on your node to use this feature.\')">🔄 Loop Out</button>' +
       '<button class="action-btn" onclick="showPeerPolicy(\'' + ch.scid + '\',\'' + ch.peer_alias + '\')">Peer Policy</button>' +
       '<button class="action-btn" onclick="openStrategyModal(\'' + ch.channel_point + '\',\'' + ch.peer_alias + '\')">⚡ Strategy</button>' +
       '<button class="action-btn danger" onclick="closeChannelConfirm(\'' + ch.channel_point + '\',\'' + ch.peer_alias + '\')">Close Channel</button>' +
